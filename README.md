@@ -4,8 +4,9 @@
 3. Install IntelliJ IDEA https://www.jetbrains.com/idea/
    (Eclip nỏ biết support)
 4. Bật terminal trong IntelliJ
-5. run: docker build -t fullstack/supershop:dev .
-6. run: docker compose -f docker-compose.yaml up (chạy hơi lâu, thế nên đợi chờ là hạnh phúc)
+5. run: ./mvnw clean install
+6. run: docker build -t fullstack/supershop:dev .
+7. run: docker compose -f docker-compose.yaml up (chạy hơi lâu, thế nên đợi chờ là hạnh phúc)
 ![image](https://github.com/Nguyentruongphivolder9/SuperShop-API/assets/100484492/83675273-0d4a-4274-a554-ef7bc1d0c354)
 
 8. vào postman test api
