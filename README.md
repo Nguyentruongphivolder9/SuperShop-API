@@ -15,9 +15,9 @@
 9. rồi run start
 10. vào postman test api
    ![image](https://github.com/Nguyentruongphivolder9/SuperShop-API/assets/100484492/b3a9a7dc-bc45-422f-bb04-e83f72648b32)
-11. vào MySQL Workbench kiểm tra dữ liệu nhé
-    ai pro thì dùng commandline
-    nhập giống form còn password là supershop
+11. Vào MySQL Workbench kiểm tra dữ liệu nhé.
+    Ai pro thì dùng commandline.
+    Nhập giống form còn password là supershop
     ![image](https://github.com/Nguyentruongphivolder9/SuperShop-API/assets/100484492/f7ffc7fd-5944-4ae2-817f-ebe2a3f17162)
 
 
