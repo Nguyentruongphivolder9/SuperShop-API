@@ -14,6 +14,28 @@ services:
       MYSQL_DATABASE: supershopdb
       MYSQL_USER: supershop
       MYSQL_PASSWORD: supershop
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "supershop", "-p", "supershop" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  supershop:
+    container_name: supershop
+    image: fullstack/supershop:dev
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    networks:
+      - network_spring
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/supershopdb
+      SPRING_DATASOURCE_USERNAME: supershop
+      SPRING_DATASOURCE_PASSWORD: supershop
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
 networks:
   network_spring:
 volumes:
