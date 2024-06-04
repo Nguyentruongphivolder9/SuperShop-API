@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    volumes:
+      - mysql_volume:/var/lib/mysql
+      - ./initdb:/docker-entrypoint-initdb.d
+    ports:
+      - "5306:3306"
+    networks:
+      - network_spring
+    environment:
+      MYSQL_ROOT_PASSWORD: supershop
+      MYSQL_DATABASE: supershopdb
+      MYSQL_USER: supershop
+      MYSQL_PASSWORD: supershop
+networks:
+  network_spring:
+volumes:
+  mysql_volume:
