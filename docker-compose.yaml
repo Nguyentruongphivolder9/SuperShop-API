@@ -2,13 +2,15 @@ version: '3.8'
 services:
   mysql:
     image: mysql:8.0
+    container_name: mysql-container
+    restart: always
     volumes:
       - mysql_volume:/var/lib/mysql
       - ./initdb:/docker-entrypoint-initdb.d
     ports:
       - "5306:3306"
     networks:
-      - network_spring
+      - supershop_network
     environment:
       MYSQL_ROOT_PASSWORD: supershop
       MYSQL_DATABASE: supershopdb
@@ -20,23 +22,20 @@ services:
       timeout: 5s
       retries: 3
 
-  supershop:
-    container_name: supershop
-    image: fullstack/supershop:dev
+  redis:
+    image: docker.io/redis:7.2.3
+    container_name: redis-container
+    restart: always
     ports:
-      - "8080:8080"
-    depends_on:
-      - mysql
+      - "6379:6379"
+    volumes:
+      - redis_volume:/var/lib/redis
+      - ./initdb:/docker-entrypoint-initdb.d
     networks:
-      - network_spring
-    environment:
-      SPRING_PROFILES_ACTIVE: dev
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/supershopdb
-      SPRING_DATASOURCE_USERNAME: supershop
-      SPRING_DATASOURCE_PASSWORD: supershop
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      - supershop_network
 
 networks:
-  network_spring:
+  supershop_network:
 volumes:
   mysql_volume:
+  redis_volume:
