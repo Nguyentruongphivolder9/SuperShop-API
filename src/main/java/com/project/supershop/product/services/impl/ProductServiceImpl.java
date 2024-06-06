@@ -15,9 +15,11 @@ import com.project.supershop.product.repositories.ProductVariantRepository;
 import com.project.supershop.product.repositories.VariantGroupRepository;
 import com.project.supershop.product.repositories.VariantRepository;
 import com.project.supershop.product.services.ProductService;
+import io.github.dengliming.redismodule.redisjson.RedisJSON;
+import io.github.dengliming.redismodule.redisjson.args.SetArgs;
+import io.github.dengliming.redismodule.redisjson.utils.GsonUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,13 +33,15 @@ public class ProductServiceImpl implements ProductService {
     private VariantGroupRepository variantGroupRepository;
     private VariantRepository variantRepository;
     private ProductVariantRepository productVariantRepository;
+    private RedisJSON redisJSON;
 
-    public ProductServiceImpl(ModelMapper modelMapper, ProductVariantRepository productVariantRepository, VariantGroupRepository variantGroupRepository, ProductRepository productRepository, VariantRepository variantRepository) {
+    public ProductServiceImpl(ModelMapper modelMapper, RedisJSON redisJSON, ProductVariantRepository productVariantRepository, VariantGroupRepository variantGroupRepository, ProductRepository productRepository, VariantRepository variantRepository) {
         this.modelMapper = modelMapper;
         this.variantGroupRepository = variantGroupRepository;
         this.productRepository = productRepository;
         this.variantRepository = variantRepository;
         this.productVariantRepository = productVariantRepository;
+        this.redisJSON = redisJSON;
     }
 
     @Override
@@ -46,7 +50,7 @@ public class ProductServiceImpl implements ProductService {
         List<Variant> variants = new ArrayList<>();
         List<ProductVariant> productVariants = new ArrayList<>();
         Product product = Product.createProduct(productRequest);
-        Product productResult = productRepository.save(product);
+        Product  productResult = productRepository.save(product);
         if(!productRequest.getIsVariant()) {
             if(productRequest.getPrice() == null || productRequest.getPrice() == 0){
                 throw new RuntimeException("error");
@@ -197,6 +201,8 @@ public class ProductServiceImpl implements ProductService {
         productResult.setVariantsGroup(variantGroups);
 
         ProductResponse productResponse = modelMapper.map(productResult, ProductResponse.class);
+        String key = "product:" + productResponse.getId();
+        redisJSON.set(key, SetArgs.Builder.create(".", GsonUtils.toJson(productResponse)));
         return ResultResponse.<ProductResponse>builder()
                 .body(productResponse)
                 .message("Create product successfully")

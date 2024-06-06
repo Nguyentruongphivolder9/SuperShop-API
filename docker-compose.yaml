@@ -23,14 +23,13 @@ services:
       retries: 3
 
   redis:
-    image: docker.io/redis:7.2.3
+    image: redis/redis-stack:latest
     container_name: redis-container
     restart: always
     ports:
       - "6379:6379"
     volumes:
       - redis_volume:/var/lib/redis
-      - ./initdb:/docker-entrypoint-initdb.d
     networks:
       - supershop_network
 
