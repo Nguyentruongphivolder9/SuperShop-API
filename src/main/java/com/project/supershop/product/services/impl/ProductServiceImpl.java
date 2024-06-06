@@ -28,12 +28,12 @@ import java.util.*;
 @Service
 @Transactional
 public class ProductServiceImpl implements ProductService {
-    private ModelMapper modelMapper;
-    private ProductRepository productRepository;
-    private VariantGroupRepository variantGroupRepository;
-    private VariantRepository variantRepository;
-    private ProductVariantRepository productVariantRepository;
-    private RedisJSON redisJSON;
+    private final ModelMapper modelMapper;
+    private final ProductRepository productRepository;
+    private final VariantGroupRepository variantGroupRepository;
+    private final VariantRepository variantRepository;
+    private final ProductVariantRepository productVariantRepository;
+    private final RedisJSON redisJSON;
 
     public ProductServiceImpl(ModelMapper modelMapper, RedisJSON redisJSON, ProductVariantRepository productVariantRepository, VariantGroupRepository variantGroupRepository, ProductRepository productRepository, VariantRepository variantRepository) {
         this.modelMapper = modelMapper;
@@ -190,7 +190,7 @@ public class ProductServiceImpl implements ProductService {
         for (VariantGroup variantGroup : variantGroups){
             List<Variant> variantList = new ArrayList<>();
             for (Variant variant : variants){
-                if(variantGroup.getId() == variant.getVariantGroup().getId()){
+                if(variantGroup.getId().equals(variant.getVariantGroup().getId())){
                     variantList.add(variant);
                 }
             }

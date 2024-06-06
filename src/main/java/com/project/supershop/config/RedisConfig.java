@@ -11,18 +11,14 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RedisConfig {
-    @Value("${spring.redis.host}")
-    private String redisHost;
-
-    @Value("${spring.redis.port}")
-    private int redisPort;
+    @Value("${spring.redis.url}")
+    private String redisURL;
 
 
     @Bean
     public Config config() {
         Config config = new Config();
-        String redisUrl = "redis://" + redisHost + ":" + redisPort;
-        config.useSingleServer().setAddress(redisUrl);
+        config.useSingleServer().setAddress(redisURL);
         return config;
     }
 
@@ -46,39 +42,6 @@ public class RedisConfig {
         return redisJSONClient.getRedisJSON();
     }
 
-
-//    @Bean
-//    public LettuceConnectionFactory redisConnectionFactory() {
-//        RedisStandaloneConfiguration configuration =
-//                new RedisStandaloneConfiguration(redisHost, redisPort);
-//        return new LettuceConnectionFactory(configuration);
-//    }
-//
-//    @Bean
-//    public RedisTemplate<String, Object> redisTemplate() {
-//
-//        RedisTemplate<String, Object> template = new RedisTemplate<>();
-//        template.setConnectionFactory(redisConnectionFactory());
-//
-//        template.setKeySerializer(new StringRedisSerializer());
-//        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(Object.class));
-//
-//        template.setHashKeySerializer(new StringRedisSerializer());
-//        template.setHashValueSerializer(new Jackson2JsonRedisSerializer<>(Object.class));
-//        template.afterPropertiesSet();
-//        return template;
-//    }
-//
-//    @Bean
-//    public ObjectMapper redisObjectMapper() {
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        SimpleModule module = new SimpleModule();
-//        module.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(DateTimeFormatter.ISO_LOCAL_DATE));
-//        module.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(DateTimeFormatter.ISO_LOCAL_DATE));
-//
-//        objectMapper.registerModule(module);
-//        return objectMapper;
-//    }
 }
 
 
