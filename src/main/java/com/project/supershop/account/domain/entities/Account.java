@@ -2,16 +2,15 @@ package com.project.supershop.account.domain.entities;
 
 import com.project.supershop.account.domain.dto.request.AccountRequest;
 import com.project.supershop.common.BaseEntity;
+import com.project.supershop.common.enums.Roles;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Entity
 @Table(name = "accounts")
@@ -20,12 +19,6 @@ import java.util.Date;
 @Data
 @SuperBuilder
 public class Account extends BaseEntity {
-    public enum Roles {
-       ADMIN,
-       USER,
-       SELLER
-    };
-
     private Roles roleName;
     private String userName;
     private String password;
@@ -38,8 +31,9 @@ public class Account extends BaseEntity {
     private Boolean isActive;
 
     public static Account createAccount(AccountRequest accountRequest){
+        Roles initializeRole = Roles.USER;
         return Account.builder()
-                .roleName(accountRequest.getRoleName())
+                .roleName(initializeRole)
                 .userName(accountRequest.getUserName())
                 .password(accountRequest.getPassword())
                 .avatarUrl(accountRequest.getAvatarUrl())
