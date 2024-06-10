@@ -1,10 +1,13 @@
 package com.project.supershop.auth.JwtTokenService;
 
 import com.project.supershop.account.domain.entities.Account;
+import com.project.supershop.config.SecurityConfig;
 import io.jsonwebtoken.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
+
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -12,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class JwtTokenService {
 
-    private final String secret_key = "mysecretkey";
+    private final String secret_key = "SUPERSHOPSECRETKEYSUPERHARDTOGUEST";
     private long accessTokenValidity = 60*60*1000;
 
     private final JwtParser jwtParser;
@@ -28,6 +31,17 @@ public class JwtTokenService {
         Claims claims = Jwts.claims().setSubject(account.getEmail());
         claims.put("userName",account.getUserName());
         claims.put("fullName",account.getFullName());
+        claims.put("email", account.getEmail());
+        claims.put("role", account.getRoleName());
+        claims.put("phoneNumber", account.getPhoneNumber());
+        claims.put("password", decodePassword(account.getPassword()));
+        claims.put("gender", account.getGender());
+        claims.put("avatarUrl", account.getAvatarUrl());
+        claims.put("isActive", account.getIsActive());
+        //Default Type: LocalDateTime
+//        claims.put("birthDay", account.getBirthDay().toString());
+//        claims.put("updatedAt", account.getUpdatedAt().toString());
+//        claims.put("createdAt", account.getCreatedAt().toString());
         Date tokenCreateTime = new Date();
         Date tokenValidity = new Date(tokenCreateTime.getTime() + TimeUnit.MINUTES.toMillis(accessTokenValidity));
         return Jwts.builder()
@@ -74,12 +88,8 @@ public class JwtTokenService {
         }
     }
 
-    public String getEmail(Claims claims) {
-        return claims.getSubject();
-    }
-
-    private List<String> getRoles(Claims claims) {
-        return (List<String>) claims.get("roles");
+    public String decodePassword(String encodedPassword){
+        return new String(Base64.getDecoder().decode(encodedPassword));
     }
 
 }
