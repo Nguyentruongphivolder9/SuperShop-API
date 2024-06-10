@@ -1,15 +1,13 @@
 package com.project.supershop.account.domain.dto.request;
 
-import com.project.supershop.account.domain.entities.Account;
-import com.project.supershop.common.enums.Roles;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,7 +15,8 @@ import java.util.Date;
 public class AccountRequest {
 
     @NotNull(message = "User role name can't be left empty")
-    private Roles roleName;
+    @Pattern(regexp = "ADMIN|USER|SELLER")
+    private String roleName;
 
     @NotBlank(message = "User name can't be blank")
     @NotNull(message = "User name can't be left empty")

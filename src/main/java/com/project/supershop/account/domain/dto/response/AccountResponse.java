@@ -1,20 +1,20 @@
 package com.project.supershop.account.domain.dto.response;
 
 import com.project.supershop.account.domain.entities.Account;
-import com.project.supershop.common.enums.Roles;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Pattern;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AccountResponse implements UserDetails {
-    private Roles roleName;
+    @Pattern(regexp = "ADMIN|USER|SELLER")
+    private String roleName;
     private String userName;
     private String password;
     private String avatarUrl;
@@ -37,22 +37,43 @@ public class AccountResponse implements UserDetails {
         this.birthDay = account.getBirthDay();
         this.gender = account.getGender();
         this.isActive = account.getIsActive();
-
-        this.authorities = Arrays.stream()
+        authorities = Arrays.stream(account.getRoleName().split(","))
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        return authorities;
     }
 
     @Override
     public String getPassword() {
-        return null;
+        return password;
     }
 
     @Override
     public String getUsername() {
-        return null;
+        return this.fullName;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
     }
 }
