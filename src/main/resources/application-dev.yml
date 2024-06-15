@@ -1,0 +1,16 @@
+# Server
+SERVER_PORT: 8080
+
+# Database
+MY_SQL_USERNAME: root
+MY_SQL_PASSWORD:
+MY_SQL_HOST: localhost
+MY_SQL_PORT: 3306
+MY_SQL_DB: supershop
+
+# Email config
+EMAIL_HOST: smtp.gmail.com
+EMAIL_PORT: 587
+EMAIL_ID: supershop@gmail.com
+EMAIL_PASSWORD: hhhkalpwdbuhokgg
+VERIFY_EMAIL_HOST: http://localhost:${SERVER_PORT}
