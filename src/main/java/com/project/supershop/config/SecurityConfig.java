@@ -1,6 +1,8 @@
 package com.project.supershop.config;
 
 import com.project.supershop.features.account.services.impl.AccountServiceImpl;
+import com.project.supershop.features.auth.filter.JwtAuthorizationFilter;
+import com.project.supershop.features.auth.services.JwtTokenService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;

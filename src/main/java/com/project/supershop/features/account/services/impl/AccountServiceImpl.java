@@ -6,6 +6,7 @@ import com.project.supershop.features.account.services.AccountService;
 import com.project.supershop.features.auth.dto.request.RegisterRequest;
 import com.project.supershop.features.email.domain.entities.Confirmation;
 import com.project.supershop.features.email.repositories.ConfirmationRepository;
+import com.project.supershop.features.email.sevices.EmailService;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -22,12 +23,14 @@ import java.util.stream.Stream;
 @Transactional
 public class AccountServiceImpl implements AccountService, UserDetailsService {
 
+    private final EmailService emailService;
     private final AccountRepositories accountRepositories;
     private final ConfirmationRepository confirmationRepository;
 
-    public AccountServiceImpl(AccountRepositories accountRepositories, ConfirmationRepository confirmationRepository) {
+    public AccountServiceImpl(AccountRepositories accountRepositories, ConfirmationRepository confirmationRepository, EmailService emailService) {
         this.accountRepositories = accountRepositories;
         this.confirmationRepository = confirmationRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -64,6 +67,22 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
     }
 
 
+    /**
+     * saveAccount
+     *
+     * Mô tả:
+     * Đây là bước gân cuối, chỉ sau bước xác thực thông qua email để enable tài khoảng. Hàm saveAccount
+     * sẽ tạo tài khoản trong khi 1 hàm gửi email là sendSimpleMailMessage sẽ được chạy 1 cách không đồng bộ với
+     * hàm saveAccount, để cả thiện thời gian đợi. Thay vì đợi cả 2 hàm tạo tài khoản và gửi mail xác nhận được thành công thì mới
+     * trả response cho client, thì sendSimpleMailMessage sẽ được chạy trên 1 sync khác.
+     *
+     * @param registerRequest 1 DTO request cho việc register
+     * @return 1 đối tượng kiểu Account
+     * @throws RuntimeException Nếu như email đã được sử dụng
+     *
+     * Tác giả: Trần Anh Tiến
+     * Ngày tạo: 16-06-2024
+     */
     @Override
     public Account saveAccount(RegisterRequest registerRequest) {
         if (accountRepositories.existsByEmail(registerRequest.getEmail())) {
@@ -87,8 +106,8 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         confirmationRepository.save(confirmation);
         /*
          * Send email confirmation to user email
-         * Sending
          * */
+        emailService.sendSimpleMailMessage(accountSaving.getUserName(), accountSaving.getEmail(), confirmation.getToken());
         return accountSaving;
     }
 
