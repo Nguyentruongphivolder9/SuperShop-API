@@ -5,6 +5,7 @@ import com.project.supershop.features.auth.dto.response.JwtResponse;
 import com.project.supershop.features.auth.services.JwtTokenService;
 import io.jsonwebtoken.*;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,9 +16,11 @@ import java.util.Date;
 @Service
 @Transactional
 public class JwtTokenServiceImpl implements JwtTokenService {
-    private final String secret_key = "SUPERSHOPSECRETKEYSUPERHARDTOGUEST";
-    private long accessTokenValidity = 60 * 60 * 1000; // 1 hour
-    private long refreshTokenValidity = 7 * 24 * 60 * 60 * 1000; // 7 days
+//    @Value("${TOKEN_SECRET_KEY}")
+    private final String secretKey = "SUPERSHOPSECRETKEYSUPERHARDTOGUEST";
+
+    private final long accessTokenValidity = 60 * 60 * 1000; // 1 hour
+    private final long refreshTokenValidity = 7 * 24 * 60 * 60 * 1000; // 7 days
 
     private final JwtParser jwtParser;
 
@@ -25,7 +28,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     private final String TOKEN_PREFIX = "Bearer ";
 
     public JwtTokenServiceImpl() {
-        this.jwtParser = Jwts.parser().setSigningKey(secret_key);
+        this.jwtParser = Jwts.parser().setSigningKey(secretKey);
     }
 
     @Override
@@ -38,7 +41,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         claims.put("phoneNumber", account.getPhoneNumber());
         claims.put("gender", account.getGender());
         claims.put("avatarUrl", account.getAvatarUrl());
-        claims.put("isActive", account.getIsActive().equals(true) ? "Online" : "Offline");
+        claims.put("isActive", account.getIsActive() ? "Online" : "Offline");
 
         Date tokenCreateTime = new Date();
         Date tokenValidity = new Date(tokenCreateTime.getTime() + accessTokenValidity);
@@ -46,24 +49,24 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         String accessToken = Jwts.builder()
                 .setClaims(claims)
                 .setExpiration(tokenValidity)
-                .signWith(SignatureAlgorithm.HS256, secret_key)
+                .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
 
-        // Tạo refresh token
+        // Create refresh token
         Date refreshTokenExpiry = new Date(tokenCreateTime.getTime() + refreshTokenValidity);
         String refreshToken = Jwts.builder()
                 .setSubject(account.getEmail())
                 .setExpiration(refreshTokenExpiry)
-                .signWith(SignatureAlgorithm.HS256, secret_key)
+                .signWith(SignatureAlgorithm.HS256, secretKey)
                 .compact();
 
-        // Tạo đối tượng JwtResponse và trả về
+        // Create JwtResponse object and return
         JwtResponse jwtResponse = new JwtResponse();
         jwtResponse.setAccessToken(accessToken);
         jwtResponse.setRefreshToken(refreshToken);
         jwtResponse.setExpireRefreshToken(refreshTokenExpiry.getTime());
         jwtResponse.setExpires(tokenValidity.getTime());
-        jwtResponse.setAccount(account); // Trực tiếp sử dụng đối tượng User
+        jwtResponse.setAccount(account);
 
         return jwtResponse;
     }

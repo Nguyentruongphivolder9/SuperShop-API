@@ -7,6 +7,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,11 +24,11 @@ import java.util.Map;
 @Component
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
-    private final JwtTokenService jwtUtil;
+    private final JwtTokenService jwtTokenService;
     private final ObjectMapper mapper;
 
-    public JwtAuthorizationFilter(JwtTokenService jwtUtil, ObjectMapper mapper) {
-        this.jwtUtil = jwtUtil;
+    public JwtAuthorizationFilter(JwtTokenService jwtTokenService, ObjectMapper mapper) {
+        this.jwtTokenService = jwtTokenService;
         this.mapper = mapper;
     }
 
@@ -36,14 +37,14 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         Map<String, Object> errorDetails = new HashMap<>();
         try {
-            String accessToken = jwtUtil.resolveToken(request);
+            String accessToken = jwtTokenService.resolveToken(request);
             if(accessToken == null){
                 filterChain.doFilter(request, response);
                 return;
             }
             System.out.println(accessToken);
-            Claims claims = jwtUtil.resolveClaims(request);
-            if(claims != null && jwtUtil.validateClaims(claims)){
+            Claims claims = jwtTokenService.resolveClaims(request);
+            if(claims != null && jwtTokenService.validateClaims(claims)){
                 String email = claims.getSubject();
                 System.out.println("Email :" + email);
                 Authentication authentication = new UsernamePasswordAuthenticationToken(email, "", new ArrayList<>());

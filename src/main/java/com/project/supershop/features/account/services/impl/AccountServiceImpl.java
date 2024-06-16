@@ -6,6 +6,7 @@ import com.project.supershop.features.account.services.AccountService;
 import com.project.supershop.features.auth.dto.request.RegisterRequest;
 import com.project.supershop.features.email.domain.entities.Confirmation;
 import com.project.supershop.features.email.repositories.ConfirmationRepository;
+import com.project.supershop.features.email.sevices.EmailService;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -22,12 +23,14 @@ import java.util.stream.Stream;
 @Transactional
 public class AccountServiceImpl implements AccountService, UserDetailsService {
 
+    private final EmailService emailService;
     private final AccountRepositories accountRepositories;
     private final ConfirmationRepository confirmationRepository;
 
-    public AccountServiceImpl(AccountRepositories accountRepositories, ConfirmationRepository confirmationRepository) {
+    public AccountServiceImpl(AccountRepositories accountRepositories, ConfirmationRepository confirmationRepository, EmailService emailService) {
         this.accountRepositories = accountRepositories;
         this.confirmationRepository = confirmationRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -87,8 +90,8 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         confirmationRepository.save(confirmation);
         /*
          * Send email confirmation to user email
-         * Sending
          * */
+        emailService.sendSimpleMailMessage(accountSaving.getUserName(), accountSaving.getEmail(), confirmation.getToken());
         return accountSaving;
     }
 

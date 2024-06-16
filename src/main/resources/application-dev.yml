@@ -1,16 +1,13 @@
-# Server
+#Server
 SERVER_PORT: 8080
-
-# Database
+#Database
 MY_SQL_USERNAME: root
 MY_SQL_PASSWORD:
-MY_SQL_HOST: localhost
-MY_SQL_PORT: 3306
-MY_SQL_DB: supershop
-
-# Email config
-EMAIL_HOST: smtp.gmail.com
+POSTGRES_SQL_PORT: 3306
+POSTGRES_SQL_DB: supershop
+#Email config
+EMAIL_HOSTL: smtp.gmail.com
 EMAIL_PORT: 587
-EMAIL_ID: supershop@gmail.com
-EMAIL_PASSWORD: hhhkalpwdbuhokgg
+EMAIl_ID: suppershop@gmail.com
+EMAIL_PASSWORD: hhhk alpw dbuh okgg
 VERIFY_EMAIL_HOST: http://localhost:${SERVER_PORT}
