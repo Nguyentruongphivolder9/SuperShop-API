@@ -17,5 +17,4 @@ public interface EmailService {
 
     void sendHtmlEmailWithEmbededFiles(String name, String to, String token);
 
-
 }

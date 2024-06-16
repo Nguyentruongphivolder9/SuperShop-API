@@ -67,6 +67,22 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
     }
 
 
+    /**
+     * saveAccount
+     *
+     * Mô tả:
+     * Đây là bước gân cuối, chỉ sau bước xác thực thông qua email để enable tài khoảng. Hàm saveAccount
+     * sẽ tạo tài khoản trong khi 1 hàm gửi email là sendSimpleMailMessage sẽ được chạy 1 cách không đồng bộ với
+     * hàm saveAccount, để cả thiện thời gian đợi. Thay vì đợi cả 2 hàm tạo tài khoản và gửi mail xác nhận được thành công thì mới
+     * trả response cho client, thì sendSimpleMailMessage sẽ được chạy trên 1 sync khác.
+     *
+     * @param registerRequest 1 DTO request cho việc register
+     * @return 1 đối tượng kiểu Account
+     * @throws RuntimeException Nếu như email đã được sử dụng
+     *
+     * Tác giả: Trần Anh Tiến
+     * Ngày tạo: 16-06-2024
+     */
     @Override
     public Account saveAccount(RegisterRequest registerRequest) {
         if (accountRepositories.existsByEmail(registerRequest.getEmail())) {
