@@ -79,11 +79,9 @@ public class AuthController {
         return ResponseEntity.ok(
                 ResultResponse.builder()
                         .timeStamp(LocalDateTime.now().toString())
-                        .data(Map.of("tokenData", jwtResponse))
+                        .body(jwtResponse)
                         .message("Authentication successful")
-                        .status(HttpStatus.OK)
                         .statusCode(HttpStatus.OK.value())
-                        .developerMessage("Use the payload given data to parse it to account object by jwtParser. Which have been built in frontend")
                         .build()
         );
     }
@@ -97,11 +95,9 @@ public class AuthController {
         return ResponseEntity.created(URI.create("")).body(
                 ResultResponse.builder()
                         .timeStamp(LocalDateTime.now().toString())
-                        .data(Map.of("jwtToken", jwtResponse))
+                        .body(jwtResponse)
                         .message("Register successful")
-                        .status(HttpStatus.CREATED)
                         .statusCode(HttpStatus.CREATED.value())
-                        .developerMessage("Use the payload given data to parse it to account object by jwtParser. Which have been built in frontend")
                         .build()
         );
 
@@ -113,9 +109,8 @@ public class AuthController {
         return ResponseEntity.ok().body(
                 ResultResponse.builder()
                         .timeStamp(LocalDateTime.now().toString())
-                        .data(Map.of("Success", isSuccess))
+                        .body(isSuccess)
                         .message("Email confirmation successfully.")
-                        .status(HttpStatus.CREATED)
                         .statusCode(HttpStatus.CREATED.value())
                         .build()
         );

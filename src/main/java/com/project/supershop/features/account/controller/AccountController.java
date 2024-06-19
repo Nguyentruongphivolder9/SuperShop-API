@@ -29,9 +29,8 @@ public class AccountController {
         return ResponseEntity.created(URI.create("")).body(
                 ResultResponse.builder()
                     .timeStamp(LocalDateTime.now().toString())
-                    .data(Map.of("accounts", account))
+                    .body(account)
                     .message("Recive all accounts successfully")
-                    .status(HttpStatus.FOUND)
                     .statusCode(HttpStatus.FOUND.value())
                 .build()
         );

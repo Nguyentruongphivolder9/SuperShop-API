@@ -12,20 +12,14 @@ import org.springframework.http.HttpStatus;
 import java.sql.Timestamp;
 import java.util.Map;
 
-@SuperBuilder
+@Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ResultResponse{
-    protected Map<?, ?> data;
+public class ResultResponse<TValue>{
+    protected TValue body;
     protected String timeStamp;
     protected String message;
     protected Integer statusCode;
-    protected HttpStatus status;
-    protected String developerMessage;
-    protected String path;
-    protected String requestMethod;
-
-    
 }
