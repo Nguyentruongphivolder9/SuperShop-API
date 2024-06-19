@@ -8,10 +8,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class ProductVariantRequest {
+    private String id;
     private Double price;
     private Integer stockQuantity;
-    private String variantsGroup1;
-    private String variant1;
-    private String variantsGroup2;
-    private String variant2;
+    private String variantsGroup1Id;
+    private String variant1Id;
+    private String variantsGroup2Id;
+    private String variant2Id;
 }

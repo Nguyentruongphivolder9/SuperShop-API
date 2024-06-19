@@ -26,7 +26,7 @@ public class Variant extends BaseEntity {
     public static Variant createVariant(VariantRequest variantRequest, VariantGroup variantGroup){
         return Variant.builder()
                 .name(variantRequest.getName())
-                .imageUrl(variantRequest.getImageUrl())
+//                .imageUrl(variantRequest.getImageUrl())
                 .isActive(variantRequest.getIsActive())
                 .variantGroup(variantGroup)
                 .build();
