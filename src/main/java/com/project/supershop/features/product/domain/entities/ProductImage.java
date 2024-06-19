@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "products")
+@Table(name = "productImages")
 @NoArgsConstructor
 @AllArgsConstructor
 @Data

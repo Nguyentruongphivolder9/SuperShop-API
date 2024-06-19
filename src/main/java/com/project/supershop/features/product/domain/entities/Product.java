@@ -21,7 +21,7 @@ public class Product extends BaseEntity {
     private Double price;
     private Integer stockQuantity;
     private String description;
-    private String condition;
+    private String conditionProduct;
     private Boolean isVariant;
     private Boolean isActive;
 
