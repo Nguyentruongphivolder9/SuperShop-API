@@ -13,7 +13,7 @@ import org.springframework.http.HttpStatus;
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ResultResponse<TValue> {
-    protected TValue data;
+    protected TValue body;
     protected String timeStamp;
     protected String message;
     protected Integer statusCode;
