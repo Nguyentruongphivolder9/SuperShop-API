@@ -69,7 +69,7 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
 
     /**
      * saveAccount
-     *
+     * <p>
      * Mô tả:
      * Đây là bước gân cuối, chỉ sau bước xác thực thông qua email để enable tài khoảng. Hàm saveAccount
      * sẽ tạo tài khoản trong khi 1 hàm gửi email là sendSimpleMailMessage sẽ được chạy 1 cách không đồng bộ với
@@ -79,9 +79,9 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
      * @param registerRequest 1 DTO request cho việc register
      * @return 1 đối tượng kiểu Account
      * @throws RuntimeException Nếu như email đã được sử dụng
-     *
-     * Tác giả: Trần Anh Tiến
-     * Ngày tạo: 16-06-2024
+     *                          <p>
+     *                          Tác giả: Trần Anh Tiến
+     *                          Ngày tạo: 16-06-2024
      */
     @Override
     public Account saveAccount(RegisterRequest registerRequest) {
@@ -107,7 +107,8 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         /*
          * Send email confirmation to user email
          * */
-        emailService.sendSimpleMailMessage(accountSaving.getUserName(), accountSaving.getEmail(), confirmation.getToken());
+//        emailService.sendSimpleMailMessage(accountSaving.getUserName(), accountSaving.getEmail(), confirmation.getToken());
+        emailService.sendMimeMessageWithEmbededImages(accountSaving.getUserName(), accountSaving.getEmail(), confirmation.getToken());
         return accountSaving;
     }
 
