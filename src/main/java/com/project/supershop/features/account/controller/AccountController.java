@@ -7,10 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/account")
@@ -23,21 +21,17 @@ public class AccountController {
     }
 
     @GetMapping
-    public ResponseEntity<ResultResponse> getAllAccounts() {
-        List<Account> account = accountService.getAllAccounts();
+    public ResponseEntity<ResultResponse<List<Account>>> getAllAccounts() {
+        List<Account> accounts = accountService.getAllAccounts();
 
-        return ResponseEntity.created(URI.create("")).body(
-                ResultResponse.builder()
-                    .timeStamp(LocalDateTime.now().toString())
-                    .body(account)
-                    .message("Recive all accounts successfully")
-                    .statusCode(HttpStatus.FOUND.value())
-                .build()
+        return ResponseEntity.ok(
+                ResultResponse.<List<Account>>builder()
+                        .timeStamp(LocalDateTime.now().toString())
+                        .data(accounts)
+                        .message("Received all accounts successfully")
+                        .status(HttpStatus.OK)
+                        .statusCode(HttpStatus.OK.value())
+                        .build()
         );
     }
-
-
-
-
-
 }
