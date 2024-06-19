@@ -27,7 +27,7 @@ public class AccountController {
         return ResponseEntity.ok(
                 ResultResponse.<List<Account>>builder()
                         .timeStamp(LocalDateTime.now().toString())
-                        .data(accounts)
+                        .body(accounts)
                         .message("Received all accounts successfully")
                         .status(HttpStatus.OK)
                         .statusCode(HttpStatus.OK.value())
