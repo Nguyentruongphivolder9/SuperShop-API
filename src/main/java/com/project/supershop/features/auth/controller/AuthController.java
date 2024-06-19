@@ -47,7 +47,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ResultResponse> authenticateUser(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<ResultResponse<JwtResponse>> authenticateUser(@RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
         );
@@ -77,13 +77,12 @@ public class AuthController {
         JwtResponse jwtResponse = jwtTokenService.createJwtResponse(account);
 
         return ResponseEntity.ok(
-                ResultResponse.builder()
+                ResultResponse.<JwtResponse>builder()
                         .timeStamp(LocalDateTime.now().toString())
-                        .data(Map.of("tokenData", jwtResponse))
-                        .message("Authentication successful")
+                        .data(jwtResponse)
+                        .message("Authentication successfully")
                         .status(HttpStatus.OK)
                         .statusCode(HttpStatus.OK.value())
-                        .developerMessage("Use the payload given data to parse it to account object by jwtParser. Which have been built in frontend")
                         .build()
         );
     }
@@ -97,11 +96,10 @@ public class AuthController {
         return ResponseEntity.created(URI.create("")).body(
                 ResultResponse.builder()
                         .timeStamp(LocalDateTime.now().toString())
-                        .data(Map.of("jwtToken", jwtResponse))
+                        .data(Map.of("data", jwtResponse))
                         .message("Register successful")
                         .status(HttpStatus.CREATED)
                         .statusCode(HttpStatus.CREATED.value())
-                        .developerMessage("Use the payload given data to parse it to account object by jwtParser. Which have been built in frontend")
                         .build()
         );
 
@@ -113,7 +111,7 @@ public class AuthController {
         return ResponseEntity.ok().body(
                 ResultResponse.builder()
                         .timeStamp(LocalDateTime.now().toString())
-                        .data(Map.of("Success", isSuccess))
+                        .data(Map.of("data", isSuccess))
                         .message("Email confirmation successfully.")
                         .status(HttpStatus.CREATED)
                         .statusCode(HttpStatus.CREATED.value())
