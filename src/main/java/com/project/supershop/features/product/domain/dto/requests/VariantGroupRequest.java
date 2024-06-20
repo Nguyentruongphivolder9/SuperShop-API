@@ -10,6 +10,7 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 public class VariantGroupRequest {
+    private String id;
     private String name;
     private Boolean isPrimary;
     private Boolean isActive;

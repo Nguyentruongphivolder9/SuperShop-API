@@ -83,7 +83,7 @@ public class ProductServiceImpl implements ProductService {
                         }
 
                         // kiểm tra isPrimary là true thì variant mới được chứa hình ảnh hoặc null
-                        if (!groupRequest.getIsPrimary() && (variantRequest.getImageUrl() != null && !variantRequest.getImageUrl().isEmpty())) {
+                        if (!groupRequest.getIsPrimary() && (variantRequest.getImageFile() != null && !variantRequest.getImageFile().isEmpty())) {
                             throw new RuntimeException("error");
                         }
 
@@ -102,14 +102,14 @@ public class ProductServiceImpl implements ProductService {
                 Set<String> variantPairs = new HashSet<>();
                 Set<String> variantExistsOneVariantGroup = new HashSet<>();
                 for (ProductVariantRequest variantRequest : productRequest.getProductVariants()) {
-                    String group1 = variantRequest.getVariantsGroup1();
-                    String group2 = variantRequest.getVariantsGroup2();
+                    String group1 = variantRequest.getVariantsGroup1Id();
+                    String group2 = variantRequest.getVariantsGroup2Id();
 
                     if(variantsGroupMap.get(group1) == null){
                         throw new RuntimeException("error");
                     }
                     // Kiểm tra variant1 phải tồn tại trong variantsGroup1
-                    if (!variantsGroupMap.get(group1).contains(variantRequest.getVariant1())) {
+                    if (!variantsGroupMap.get(group1).contains(variantRequest.getVariant1Id())) {
                         throw new RuntimeException("error");
                     }
 
@@ -126,16 +126,16 @@ public class ProductServiceImpl implements ProductService {
                             && productRequest.getProductVariants().toArray().length == variants.toArray().length){
                         ProductVariant productVariantBuild = ProductVariant.createVariant(variantRequest, productResult);
                         // trả về lối nếu VariantsGroup2 tôn tại dữ liệu
-                        if(variantRequest.getVariantsGroup2() != null || variantRequest.getVariant2() != null){
+                        if(variantRequest.getVariantsGroup2Id() != null || variantRequest.getVariant2Id() != null){
                             throw new RuntimeException("error");
                         }
 
-                        if(!variantExistsOneVariantGroup.add(variantRequest.getVariant1())){
+                        if(!variantExistsOneVariantGroup.add(variantRequest.getVariant1Id())){
                             throw new RuntimeException("error");
                         }
                         for(Variant variant : variants){
 
-                            if(variant.getName().equals(variantRequest.getVariant1())){
+                            if(variant.getName().equals(variantRequest.getVariant1Id())){
                                 productVariantBuild.setVariant1(variant);
                             }
                         }
@@ -153,12 +153,12 @@ public class ProductServiceImpl implements ProductService {
                         }
 
                         // Kiểm tra variant2 phải tồn tại trong variantsGroup2
-                        if (!variantsGroupMap.get(group2).contains(variantRequest.getVariant2())) {
+                        if (!variantsGroupMap.get(group2).contains(variantRequest.getVariant2Id())) {
                             throw new RuntimeException("error");
                         }
 
                         // Kiểm tra cặp variant1 và variant2 không được giống nha
-                        String variantPair = variantRequest.getVariant1() + "-" + variantRequest.getVariant2();
+                        String variantPair = variantRequest.getVariant1Id() + "-" + variantRequest.getVariant2Id();
                         if (!variantPairs.add(variantPair)) {
                             throw new RuntimeException("error");
                         }
@@ -167,11 +167,11 @@ public class ProductServiceImpl implements ProductService {
                         ProductVariant productVariantBuild = ProductVariant.createVariant(variantRequest, productResult);
                         for(Variant variant : variants){
 
-                            if(variant.getName().equals(variantRequest.getVariant1())){
+                            if(variant.getName().equals(variantRequest.getVariant1Id())){
                                 productVariantBuild.setVariant1(variant);
                             }
 
-                            if(variant.getName().equals(variantRequest.getVariant2())){
+                            if(variant.getName().equals(variantRequest.getVariant2Id())){
                                 productVariantBuild.setVariant2(variant);
                             }
                         }

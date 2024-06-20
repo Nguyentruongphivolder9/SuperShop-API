@@ -20,8 +20,13 @@ public class Product extends BaseEntity {
     private String name;
     private Double price;
     private Integer stockQuantity;
+    private String description;
+    private String condition;
     private Boolean isVariant;
     private Boolean isActive;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<ProductImage> productImages;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<VariantGroup> variantsGroup;

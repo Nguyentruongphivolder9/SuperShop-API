@@ -12,8 +12,8 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ResultResponse<T> {
-    protected T data;
+public class ResultResponse<TValue> {
+    protected TValue data;
     protected String timeStamp;
     protected String message;
     protected Integer statusCode;
