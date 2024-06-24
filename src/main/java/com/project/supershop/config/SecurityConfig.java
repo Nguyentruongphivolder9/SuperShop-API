@@ -42,7 +42,7 @@ public class SecurityConfig {
                 .authorizeRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers(new AntPathRequestMatcher("/api/v1/auth/**")).permitAll()
-                                .requestMatchers(new AntPathRequestMatcher("/public/**")).permitAll()
+                                .requestMatchers(new AntPathRequestMatcher("/api/v1/**")).permitAll()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement ->

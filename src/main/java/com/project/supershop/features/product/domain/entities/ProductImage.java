@@ -2,6 +2,7 @@ package com.project.supershop.features.product.domain.entities;
 
 
 import com.project.supershop.common.BaseEntity;
+import com.project.supershop.features.product.domain.dto.requests.ProductVariantRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,10 +16,18 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 public class ProductImage extends BaseEntity {
-    private String name;
+    private String imageUrl;
     private Boolean isPrimary;
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "productId")
     private Product product;
+
+    public static ProductImage createProductImage(String filename, Boolean isPrimary, Product product){
+        return ProductImage.builder()
+                .imageUrl(filename)
+                .isPrimary(isPrimary)
+                .product(product)
+                .build();
+    }
 }
