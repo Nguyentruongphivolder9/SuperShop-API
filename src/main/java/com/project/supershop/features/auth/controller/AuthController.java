@@ -79,7 +79,7 @@ public class AuthController {
         return ResponseEntity.ok(
                 ResultResponse.<JwtResponse>builder()
                         .timeStamp(LocalDateTime.now().toString())
-                        .data(jwtResponse)
+                        .body(jwtResponse)
                         .message("Authentication successfully")
                         .status(HttpStatus.OK)
                         .statusCode(HttpStatus.OK.value())
@@ -96,7 +96,7 @@ public class AuthController {
         return ResponseEntity.created(URI.create("")).body(
                 ResultResponse.builder()
                         .timeStamp(LocalDateTime.now().toString())
-                        .data(Map.of("data", jwtResponse))
+                        .body(Map.of("data", jwtResponse))
                         .message("Register successful")
                         .status(HttpStatus.CREATED)
                         .statusCode(HttpStatus.CREATED.value())
@@ -111,7 +111,7 @@ public class AuthController {
         return ResponseEntity.ok().body(
                 ResultResponse.builder()
                         .timeStamp(LocalDateTime.now().toString())
-                        .data(Map.of("data", isSuccess))
+                        .body(Map.of("data", isSuccess))
                         .message("Email confirmation successfully.")
                         .status(HttpStatus.CREATED)
                         .statusCode(HttpStatus.CREATED.value())
