@@ -7,7 +7,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 import java.util.Properties;
-
+import org.thymeleaf.TemplateEngine;
 @Configuration
 public class EmailSenderConfig {
     @Value("${spring.mail.password}")
@@ -31,5 +31,6 @@ public class EmailSenderConfig {
 
         return mailSender;
     }
+
 }
 
