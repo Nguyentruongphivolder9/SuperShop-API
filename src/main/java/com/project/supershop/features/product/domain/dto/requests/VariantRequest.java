@@ -11,6 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class VariantRequest {
     private String id;
     private String name;
-    private MultipartFile imageFile;
+    private String imageUrl;
     private Boolean isActive;
 }
