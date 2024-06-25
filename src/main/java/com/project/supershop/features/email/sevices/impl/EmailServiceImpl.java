@@ -12,8 +12,11 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.io.File;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -31,9 +34,11 @@ public class EmailServiceImpl implements EmailService {
     private String fromEmail;
 
     private final JavaMailSender javaMailSender;
+    private final SpringTemplateEngine templateEngine;
 
-    public EmailServiceImpl(JavaMailSender javaMailSender) {
+    public EmailServiceImpl(JavaMailSender javaMailSender, SpringTemplateEngine templateEngine) {
         this.javaMailSender = javaMailSender;
+        this.templateEngine = templateEngine;
     }
 
     @Override
@@ -66,7 +71,25 @@ public class EmailServiceImpl implements EmailService {
     @Override
     @Async
     public void sendHtmlEmail(String name, String to, String token) {
-        sendMimeMessage(name, to, token, "src/main/java/com/project/supershop/access/images/images.jpg", true);
+        try {
+            Context context = new Context();
+            context.setVariables(Map.of("name", name, "url", EmailUtils.getVerifycationUrl(host, token)));
+
+            String text = templateEngine.process("emailTemplate", context);
+
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, UTF_8_ENCODING);
+
+            helper.setPriority(1);
+            helper.setSubject(NEW_USER_ACCOUNT_VERIFICATION);
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setText(text, true);
+
+            javaMailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Error sending HTML email: " + e.getMessage(), e);
+        }
     }
 
     @Override

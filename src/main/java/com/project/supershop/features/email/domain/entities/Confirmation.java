@@ -1,6 +1,5 @@
 package com.project.supershop.features.email.domain.entities;
 
-import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -19,13 +18,10 @@ import java.util.UUID;
 @SuperBuilder
 public class Confirmation extends BaseEntity {
     private String token;
+    private String email;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id", nullable = false)
-    private Account account;
-
-    public Confirmation(Account account) {
-        this.account = account;
+    public Confirmation(String email) {
+        this.email = email;
         this.token = UUID.randomUUID().toString();
     }
 

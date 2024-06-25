@@ -102,13 +102,6 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         accountSaving.setRoleName("USER");
         accountSaving.setIsActive(registerRequest.isActive());
         accountRepositories.save(accountSaving);
-        Confirmation confirmation = new Confirmation(accountSaving);
-        confirmationRepository.save(confirmation);
-        /*
-         * Send email confirmation to user email
-         * */
-//        emailService.sendSimpleMailMessage(accountSaving.getUserName(), accountSaving.getEmail(), confirmation.getToken());
-        emailService.sendMimeMessageWithEmbededImages(accountSaving.getUserName(), accountSaving.getEmail(), confirmation.getToken());
         return accountSaving;
     }
 

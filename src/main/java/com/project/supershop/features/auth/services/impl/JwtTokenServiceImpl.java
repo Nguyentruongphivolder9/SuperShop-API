@@ -25,7 +25,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     private final JwtParser jwtParser;
 
     private final String TOKEN_HEADER = "Authorization";
-    private final String TOKEN_PREFIX = "Bearer ";
+    private final String TOKEN_PREFIX = "Bearer";
 
     public JwtTokenServiceImpl() {
         this.jwtParser = Jwts.parser().setSigningKey(secretKey);
