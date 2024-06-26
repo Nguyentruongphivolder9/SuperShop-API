@@ -1,5 +1,6 @@
 package com.project.supershop.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.supershop.features.account.services.impl.AccountServiceImpl;
 import com.project.supershop.features.auth.filter.JwtAuthorizationFilter;
 import com.project.supershop.features.auth.services.JwtTokenService;
@@ -13,16 +14,21 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-    private final AccountServiceImpl accountService;
 
-    public SecurityConfig(AccountServiceImpl accountService){
+    private final AccountServiceImpl accountService;
+    private final JwtTokenService jwtTokenService;
+    private final ObjectMapper objectMapper;
+
+    public SecurityConfig(AccountServiceImpl accountService, JwtTokenService jwtTokenService, ObjectMapper objectMapper) {
         this.accountService = accountService;
+        this.jwtTokenService = jwtTokenService;
+        this.objectMapper = objectMapper;
     }
 
     @Bean
@@ -30,24 +36,25 @@ public class SecurityConfig {
             throws Exception {
         AuthenticationManagerBuilder authenticationManagerBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
         authenticationManagerBuilder.userDetailsService(accountService).passwordEncoder(noOpPasswordEncoder);
-
         return authenticationManagerBuilder.build();
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        JwtAuthorizationFilter jwtAuthorizationFilter = new JwtAuthorizationFilter(jwtTokenService, objectMapper);
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers(new AntPathRequestMatcher("/api/v1/auth/**")).permitAll()
-                                .requestMatchers(new AntPathRequestMatcher("/public/**")).permitAll()
                                 .anyRequest().authenticated()
                 )
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                );
+                )
+                .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -57,5 +64,4 @@ public class SecurityConfig {
     public NoOpPasswordEncoder passwordEncoder() {
         return (NoOpPasswordEncoder) NoOpPasswordEncoder.getInstance();
     }
-
 }

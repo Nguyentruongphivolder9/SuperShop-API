@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -24,9 +25,10 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ResultResponse> createAuthor(@Valid @ModelAttribute ProductRequest productRequest) {
+    @PostMapping(
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<ResultResponse> createAuthor(@Valid @RequestBody ProductRequest productRequest) {
         ProductResponse result = productService.createProduct(productRequest);
         return ResponseEntity.created(URI.create("")).body(
                 ResultResponse.builder()

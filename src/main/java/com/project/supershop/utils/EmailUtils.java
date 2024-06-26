@@ -11,7 +11,7 @@ public class EmailUtils {
                 + "\n\nThe support Team";
     }
 
-    private static String getVerifycationUrl(String serverUrl, String token) {
-        return serverUrl + "/api/v1/auth?token=" + token;
+    public static String getVerifycationUrl(String serverUrl, String token) {
+        return serverUrl + "/api/v1/auth/send-email?token=" + token;
     }
 }

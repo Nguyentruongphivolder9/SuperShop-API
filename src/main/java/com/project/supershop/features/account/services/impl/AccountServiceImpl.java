@@ -57,9 +57,9 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
             throw new IllegalArgumentException("Invalid token");
         }
 
-        Optional<Account> accountOpt = accountRepositories.findAccountByEmail(confirmation.getAccount().getEmail());
+        Optional<Account> accountOpt = accountRepositories.findAccountByEmail(confirmation.getEmail());
         Account account = accountOpt.orElseThrow(() ->
-                new UsernameNotFoundException("Account not found with user email: " + confirmation.getAccount().getEmail()));
+                new UsernameNotFoundException("Account not found with user email: " + confirmation.getEmail()));
 
         account.setIsEnable(true);
         accountRepositories.save(account);
@@ -102,13 +102,6 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         accountSaving.setRoleName("USER");
         accountSaving.setIsActive(registerRequest.isActive());
         accountRepositories.save(accountSaving);
-        Confirmation confirmation = new Confirmation(accountSaving);
-        confirmationRepository.save(confirmation);
-        /*
-         * Send email confirmation to user email
-         * */
-//        emailService.sendSimpleMailMessage(accountSaving.getUserName(), accountSaving.getEmail(), confirmation.getToken());
-        emailService.sendMimeMessageWithEmbededImages(accountSaving.getUserName(), accountSaving.getEmail(), confirmation.getToken());
         return accountSaving;
     }
 
