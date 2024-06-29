@@ -88,9 +88,9 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
             confirmationRepository.save(confirmation);
             emailRepository.save(email);
 
-        }
         return emailResponse;
     }
+
 
     @Override
     public void processNewEmailVerification(String emailTo) {

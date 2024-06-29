@@ -1,5 +1,7 @@
 package com.project.supershop.features.product.domain.dto.requests;
 
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
