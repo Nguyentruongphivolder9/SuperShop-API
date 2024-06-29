@@ -16,19 +16,20 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @Service
 @Transactional
 public class EmailServiceImpl implements EmailService {
     public static final String NEW_USER_ACCOUNT_VERIFICATION = "New User Account Verification";
-    public static final String UTF_8_ENCODING = "UTF-8";
-
+    public static final String UTF_8_ENCODING = StandardCharsets.UTF_8.name();
+    public static final String EMAIL_TEMPLATE = "emailTemplate";
     @Value("${spring.pulsar.client.service-url}")
     private String serverUrl;
 
-    @Value("${spring.mail.host}")
-    private String host;
+    @Value("${spring.mail.verify}")
+    private String verifyUrl;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -72,10 +73,11 @@ public class EmailServiceImpl implements EmailService {
     @Async
     public void sendHtmlEmail(String name, String to, String token) {
         try {
+            to = to.trim();
             Context context = new Context();
-            context.setVariables(Map.of("name", name, "url", EmailUtils.getVerifycationUrl(host, token)));
+            context.setVariables(Map.of("name", name, "url", EmailUtils.getVerifycationUrl(verifyUrl, token)));
 
-            String text = templateEngine.process("emailTemplate", context);
+            String text = templateEngine.process(EMAIL_TEMPLATE, context);
 
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, UTF_8_ENCODING);
@@ -89,6 +91,8 @@ public class EmailServiceImpl implements EmailService {
             javaMailSender.send(message);
         } catch (MessagingException e) {
             throw new RuntimeException("Error sending HTML email: " + e.getMessage(), e);
+        } catch (Exception e) {
+            throw new RuntimeException("Unexpected error sending HTML email", e);
         }
     }
 

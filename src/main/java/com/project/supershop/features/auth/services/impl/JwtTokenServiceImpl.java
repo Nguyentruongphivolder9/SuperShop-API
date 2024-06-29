@@ -16,7 +16,7 @@ import java.util.Date;
 @Service
 @Transactional
 public class JwtTokenServiceImpl implements JwtTokenService {
-//    @Value("${TOKEN_SECRET_KEY}")
+    //    @Value("${TOKEN_SECRET_KEY}")
     private final String secretKey = "SUPERSHOPSECRETKEYSUPERHARDTOGUEST";
 
     private final long accessTokenValidity = 60 * 60 * 1000; // 1 hour

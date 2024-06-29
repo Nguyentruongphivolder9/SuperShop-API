@@ -14,9 +14,8 @@ import java.time.LocalDateTime;
 @Data
 public class AccountRequest {
 
-    @NotNull(message = "User role name can't be left empty")
     @Pattern(regexp = "ADMIN|USER|SELLER")
-    private String roleName;
+    private String roleName = "USER";
 
     @NotBlank(message = "User name can't be blank")
     @NotNull(message = "User name can't be left empty")
@@ -25,9 +24,6 @@ public class AccountRequest {
     @NotBlank(message = "User password can't be blank")
     @NotNull(message = "User password can't be left empty")
     private String password;
-
-    @NotNull(message = "User avatarURL can't be left empty")
-    private String avatarUrl;
 
     @NotBlank(message = "User full name can't be blank")
     @NotNull(message = "User full name can't be left empty")
@@ -42,6 +38,10 @@ public class AccountRequest {
     private String phoneNumber;
 
     private LocalDateTime birthDay;
+
+    @NotBlank(message = "User address can't be blank")
+    @NotNull(message = "User address can't be left empty")
+    private String address;
 
     @NotNull(message = "User gender can't be left empty")
     private String gender;
