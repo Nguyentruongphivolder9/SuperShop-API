@@ -1,11 +1,16 @@
 package com.project.supershop.features.account.services.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.features.account.repositories.AccountRepositories;
 import com.project.supershop.features.account.services.AccountService;
 import com.project.supershop.features.auth.dto.request.RegisterRequest;
+import com.project.supershop.features.auth.dto.response.EmailVerficationResponse;
 import com.project.supershop.features.email.domain.entities.Confirmation;
+import com.project.supershop.features.email.domain.entities.Email;
 import com.project.supershop.features.email.repositories.ConfirmationRepository;
+import com.project.supershop.features.email.repositories.EmailRepository;
 import com.project.supershop.features.email.sevices.EmailService;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,8 +19,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,11 +31,16 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
     private final EmailService emailService;
     private final AccountRepositories accountRepositories;
     private final ConfirmationRepository confirmationRepository;
+    private final EmailRepository emailRepository;
+    private EmailVerficationResponse emailVerficationResponse;
+    private final ObjectMapper objectMapper;
 
-    public AccountServiceImpl(AccountRepositories accountRepositories, ConfirmationRepository confirmationRepository, EmailService emailService) {
+    public AccountServiceImpl(AccountRepositories accountRepositories, ConfirmationRepository confirmationRepository, EmailService emailService, EmailRepository emailRepository,  ObjectMapper objectMapper) {
         this.accountRepositories = accountRepositories;
         this.confirmationRepository = confirmationRepository;
         this.emailService = emailService;
+        this.emailRepository = emailRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -51,21 +61,91 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
     }
 
     @Override
-    public Boolean verifyToken(String token) {
-        Confirmation confirmation = confirmationRepository.findByToken(token);
+    public EmailVerficationResponse verifyToken(String token) {
+        //Response message cho HTML Mail sender.
+        EmailVerficationResponse emailResponse = new EmailVerficationResponse();
+        Confirmation confirmation = confirmationRepository.findConfirmationByToken(token);
+        Email email = emailRepository.findEmailByConfirmations(confirmation);
+
+        LocalDateTime date = null;
         if (confirmation == null) {
-            throw new IllegalArgumentException("Invalid token");
+            emailResponse.setType("Not Found");
+            emailResponse.setMessage("Confirmation token not found.");
+            return emailResponse;
         }
+        LocalDateTime expiredDay = confirmation.getExpiredDay();
+        LocalDateTime now = LocalDateTime.now();
+        emailResponse.setEmail(email.getEmailAddress());
+        if (expiredDay.isBefore(now)) {
+            emailResponse.setType("Expired");
+            emailResponse.setMessage("Verification link expired.");
+        } else {
+            email.setVerified(true);
+            emailResponse.setType("Fine");
+            emailResponse.setMessage("Verification successful.");
+            confirmation.setVerify(true);
+            confirmation.setUpdatedAt(date.now());
+            confirmationRepository.save(confirmation);
+            emailRepository.save(email);
 
-        Optional<Account> accountOpt = accountRepositories.findAccountByEmail(confirmation.getAccount().getEmail());
-        Account account = accountOpt.orElseThrow(() ->
-                new UsernameNotFoundException("Account not found with user email: " + confirmation.getAccount().getEmail()));
-
-        account.setIsEnable(true);
-        accountRepositories.save(account);
-        return Boolean.TRUE;
+        }
+        return emailResponse;
     }
 
+    @Override
+    public void processNewEmailVerification(String emailTo) {
+        Optional<Account> accountExists = accountRepositories.findAccountByEmail(emailTo);
+        if (!accountExists.isPresent()) {
+            Email email = emailRepository.findEmailByEmailAddress(emailTo);
+            if (email == null) {
+                email = new Email();
+                email.setEmailAddress(emailTo);
+            }
+
+            Confirmation emailConfirm = new Confirmation();
+            emailConfirm.setEmail(email);
+
+            confirmationRepository.save(emailConfirm);
+            List<Confirmation> confirmationList = email.getConfirmations();
+            if (confirmationList == null) {
+                confirmationList = new ArrayList<>();
+                email.setConfirmations(confirmationList);
+            }
+            confirmationList.add(emailConfirm);
+            emailRepository.save(email);
+
+            // Send email
+            emailService.sendHtmlEmail("New User", emailTo, emailConfirm.getToken());
+        } else {
+            throw new RuntimeException("Email already verified for another account");
+        }
+    }
+
+    @Override
+    public void logoutAccount(String token) {
+        try {
+            String[] parts = token.split("\\.");
+            String encodedPayload = parts[1];
+            byte[] decodedBytes = Base64.getUrlDecoder().decode(encodedPayload);
+            String decodedPayload = new String(decodedBytes, "UTF-8");
+
+            // Deserialize JSON payload to a map
+            Map<String, Object> payloadMap = objectMapper.readValue(decodedPayload, new TypeReference<Map<String, Object>>() {});
+
+            // Extract necessary fields from the payload map
+            Integer accountId = (Integer) payloadMap.get("id");
+
+            // Fetch account from database using accountId
+            Account account = accountRepositories.findById(accountId)
+                    .orElseThrow(() -> new RuntimeException("Account not found for id: " + accountId));
+
+            // Perform logout action (e.g., set isActive to false)
+            account.setIsActive(false);
+            accountRepositories.save(account);
+        } catch (Exception e) {
+            throw new RuntimeException("Could not decode or access JWT token payload", e);
+        }
+    }
 
     /**
      * saveAccount
@@ -129,4 +209,6 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
                 authorities
         );
     }
+
+
 }

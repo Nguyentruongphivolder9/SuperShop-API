@@ -2,6 +2,7 @@ package com.project.supershop.features.account.services;
 
 import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.features.auth.dto.request.RegisterRequest;
+import com.project.supershop.features.auth.dto.response.EmailVerficationResponse;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
@@ -15,6 +16,7 @@ public interface AccountService {
     Account findByEmail(String email);
     Account findByPhoneNumber(String phoneNumber);
     //Email verify token interfaces
-    Boolean verifyToken(String token);
-
+    EmailVerficationResponse verifyToken(String token);
+    void processNewEmailVerification(String emailTo);
+    void logoutAccount(String token);
 }
