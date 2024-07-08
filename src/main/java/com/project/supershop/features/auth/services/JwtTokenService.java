@@ -1,7 +1,8 @@
 package com.project.supershop.features.auth.services;
 
 import com.project.supershop.features.account.domain.entities.Account;
-import com.project.supershop.features.auth.dto.response.JwtResponse;
+import com.project.supershop.features.auth.domain.dto.response.JwtResponse;
+import com.project.supershop.features.auth.domain.entities.AccessToken;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.AuthenticationException;

@@ -1,14 +1,12 @@
-package com.project.supershop.features.auth.dto.request;
-
+package com.project.supershop.features.account.domain.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LoginRequest {
+@Data
+public class LogoutRequest {
     private String email;
-    private String password;
 }

@@ -1,4 +1,4 @@
-package com.project.supershop.features.auth.dto.response;
+package com.project.supershop.features.auth.domain.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,4 +11,5 @@ public class EmailVerficationResponse {
     private String type;
     private String email;
     private String message;
+
 }
