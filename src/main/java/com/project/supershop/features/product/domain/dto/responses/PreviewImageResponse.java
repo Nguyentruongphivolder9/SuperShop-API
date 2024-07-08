@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class ProductImagesResponse {
+public class PreviewImageResponse {
     private String id;
-    private String imageUrl;
-    private  Boolean isPrimary;
+    private String preImageUrl;
 }

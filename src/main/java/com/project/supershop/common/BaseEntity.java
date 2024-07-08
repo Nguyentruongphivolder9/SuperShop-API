@@ -1,6 +1,7 @@
 package com.project.supershop.common;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.google.gson.annotations.Expose;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

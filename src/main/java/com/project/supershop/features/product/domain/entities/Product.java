@@ -39,6 +39,8 @@ public class Product extends BaseEntity {
                 .name(productRequest.getName())
                 .price(productRequest.getPrice())
                 .stockQuantity(productRequest.getStockQuantity())
+                .conditionProduct(productRequest.getConditionProduct())
+                .description(productRequest.getDescription())
                 .isVariant(productRequest.getIsVariant())
                 .isActive(productRequest.getIsActive())
                 .build();

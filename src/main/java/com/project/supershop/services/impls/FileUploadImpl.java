@@ -2,6 +2,7 @@ package com.project.supershop.services.impls;
 
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.project.supershop.services.FileUploadUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,11 +14,8 @@ import java.util.*;
 
 @Service
 public class FileUploadImpl implements FileUploadUtils {
-    @Value("amazon.bucket-name")
+    @Value("super-shop")
     private String bucketName;
-
-    @Value("amazon.endpoint-url")
-    private String url;
 
     private AmazonS3 amazonS3;
 
@@ -26,7 +24,7 @@ public class FileUploadImpl implements FileUploadUtils {
     }
 
     @Override
-    public String uploadFile(MultipartFile imageFile, String brandImage, String imageName) throws IOException {
+    public String uploadFile(MultipartFile imageFile, String brandImage) throws IOException {
         if (!Arrays.asList("image/png", "image/jpeg").contains(imageFile.getContentType())) {
             throw new IllegalStateException("File uploaded is not an image");
         }
@@ -35,7 +33,7 @@ public class FileUploadImpl implements FileUploadUtils {
         metadata.put("Content-Type", imageFile.getContentType());
         metadata.put("Content-Length", String.valueOf(imageFile.getSize()));
         String path = String.format("%s/%s", bucketName, brandImage);
-        String fileName = String.format("%s-%s", imageName, UUID.randomUUID());
+        String fileName = String.format("%s-%s", "ss-picture", UUID.randomUUID());
         String contentType = imageFile.getContentType();
 
         ObjectMetadata objectMetadata = new ObjectMetadata();
@@ -47,9 +45,23 @@ public class FileUploadImpl implements FileUploadUtils {
         objectMetadata.setContentType(contentType);
         try {
             amazonS3.putObject(path, fileName, imageFile.getInputStream(), objectMetadata);
-            return url + "/" + path + "/" + fileName;
+            return fileName;
         } catch (AmazonServiceException e) {
             throw new IllegalStateException("Failed to upload the file", e);
+        }
+    }
+
+    @Override
+    public void deleteFile(String brandImage, String fileName) {
+        if (fileName == null) {
+            return;
+        }
+
+        String path = String.format("%s/%s", bucketName, brandImage);
+        try {
+            amazonS3.deleteObject(path, fileName);
+        } catch (AmazonS3Exception e) {
+            throw new IllegalStateException("Failed to delete the file", e);
         }
     }
 }

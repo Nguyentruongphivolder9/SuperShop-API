@@ -14,7 +14,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler
-    public ResponseEntity<ExceptionResponse> handleException(NotFoundException ext){
+    public ResponseEntity<ExceptionResponse> handleNotFoundException(NotFoundException ext){
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
@@ -26,14 +26,40 @@ public class GlobalExceptionHandler {
                                 .build()
                 );
     }
+    @ExceptionHandler
+    public ResponseEntity<ExceptionResponse> handleUnprocessableException(UnprocessableException ext){
+
+        return ResponseEntity
+                .status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(
+                        ExceptionResponse.builder()
+                                .message("Invalid format!")
+                                .error(ext.getMessage())
+                                .statusCode(HttpStatus.UNPROCESSABLE_ENTITY.value())
+                                .build()
+                );
+    }
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ExceptionResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException exp) {
+//        Map<String, String> errors = new HashMap<>();
+//        exp.getBindingResult().getAllErrors()
+//                .forEach(error -> {
+//                    FieldError fe = (FieldError)error;
+//                    errors.put(fe.getField(), fe.getDefaultMessage());
+//                });
         Map<String, String> errors = new HashMap<>();
-        exp.getBindingResult().getAllErrors()
-                .forEach(error -> {
-                    FieldError fe = (FieldError)error;
-                    errors.put(fe.getField(), fe.getDefaultMessage());
-                });
+
+        exp.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName;
+            String errorMessage = error.getDefaultMessage();
+            if (error instanceof FieldError) {
+                FieldError fieldError = (FieldError) error;
+                fieldName = fieldError.getField();
+            } else {
+                fieldName = error.getObjectName();
+            }
+            errors.put(fieldName, errorMessage);
+        });
 
         return ResponseEntity
                 .status(HttpStatus.UNPROCESSABLE_ENTITY)

@@ -23,11 +23,11 @@ public class Variant extends BaseEntity {
     @JoinColumn(name = "variantGroupId")
     private VariantGroup variantGroup;
 
-    public static Variant createVariant(VariantRequest variantRequest, VariantGroup variantGroup){
+    public static Variant createVariant(String name, String fileName, VariantGroup variantGroup){
         return Variant.builder()
-                .name(variantRequest.getName())
-//                .imageUrl(variantRequest.getImageUrl())
-                .isActive(variantRequest.getIsActive())
+                .name(name)
+                .imageUrl(fileName)
+                .isActive(true)
                 .variantGroup(variantGroup)
                 .build();
     }
