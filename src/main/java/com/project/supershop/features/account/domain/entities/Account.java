@@ -29,6 +29,7 @@ public class Account extends BaseEntity {
     private String gender;
     private String device;
     private Boolean isActive;
+    private Boolean isLoggedOut;
     private Boolean isEnable;
 
     public Account(String roles, String name, String email, int id){

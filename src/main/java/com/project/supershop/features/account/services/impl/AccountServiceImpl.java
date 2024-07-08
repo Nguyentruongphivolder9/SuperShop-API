@@ -1,12 +1,14 @@
 package com.project.supershop.features.account.services.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.features.account.repositories.AccountRepositories;
 import com.project.supershop.features.account.services.AccountService;
-import com.project.supershop.features.auth.dto.request.RegisterRequest;
-import com.project.supershop.features.auth.dto.response.EmailVerficationResponse;
+import com.project.supershop.features.auth.domain.dto.request.RegisterRequest;
+import com.project.supershop.features.auth.domain.dto.response.EmailVerficationResponse;
+import com.project.supershop.features.auth.domain.dto.response.JwtResponse;
+import com.project.supershop.features.auth.domain.entities.AccessToken;
+import com.project.supershop.features.auth.services.AccessTokenService;
+import com.project.supershop.features.auth.services.JwtTokenService;
 import com.project.supershop.features.email.domain.entities.Confirmation;
 import com.project.supershop.features.email.domain.entities.Email;
 import com.project.supershop.features.email.repositories.ConfirmationRepository;
@@ -20,7 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,15 +36,17 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
     private final AccountRepositories accountRepositories;
     private final ConfirmationRepository confirmationRepository;
     private final EmailRepository emailRepository;
-    private EmailVerficationResponse emailVerficationResponse;
-    private final ObjectMapper objectMapper;
 
-    public AccountServiceImpl(AccountRepositories accountRepositories, ConfirmationRepository confirmationRepository, EmailService emailService, EmailRepository emailRepository,  ObjectMapper objectMapper) {
+    private final JwtTokenService jwtTokenService;
+    private final AccessTokenService accessTokenService;
+
+    public AccountServiceImpl(AccountRepositories accountRepositories, ConfirmationRepository confirmationRepository, EmailService emailService, EmailRepository emailRepository, JwtTokenService jwtTokenService, AccessTokenService accessTokenService) {
         this.accountRepositories = accountRepositories;
         this.confirmationRepository = confirmationRepository;
         this.emailService = emailService;
         this.emailRepository = emailRepository;
-        this.objectMapper = objectMapper;
+        this.jwtTokenService = jwtTokenService;
+        this.accessTokenService = accessTokenService;
     }
 
     @Override
@@ -62,35 +68,38 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
 
     @Override
     public EmailVerficationResponse verifyToken(String token) {
-        //Response message cho HTML Mail sender.
         EmailVerficationResponse emailResponse = new EmailVerficationResponse();
         Confirmation confirmation = confirmationRepository.findConfirmationByToken(token);
         Email email = emailRepository.findEmailByConfirmations(confirmation);
 
-        LocalDateTime date = null;
         if (confirmation == null) {
             emailResponse.setType("Not Found");
             emailResponse.setMessage("Confirmation token not found.");
             return emailResponse;
         }
+
         LocalDateTime expiredDay = confirmation.getExpiredDay();
         LocalDateTime now = LocalDateTime.now();
         emailResponse.setEmail(email.getEmailAddress());
         if (expiredDay.isBefore(now)) {
             emailResponse.setType("Expired");
             emailResponse.setMessage("Verification link expired.");
-        } else {
+        }else if(email.isVerified() == true) {
+            emailResponse.setType("Verified");
+            emailResponse.setMessage("Email was already be verified");
+        }
+        else {
+            List<Confirmation> confirmationsList = confirmationRepository.findByEmail(email);
+            for(Confirmation confirmation1 : confirmationsList){
+                confirmationRepository.delete(confirmation1);
+            }
             email.setVerified(true);
             emailResponse.setType("Fine");
             emailResponse.setMessage("Verification successful.");
-            confirmation.setVerify(true);
-            confirmation.setUpdatedAt(date.now());
-            confirmationRepository.save(confirmation);
             emailRepository.save(email);
-
+        }
         return emailResponse;
     }
-
 
     @Override
     public void processNewEmailVerification(String emailTo) {
@@ -114,7 +123,6 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
             confirmationList.add(emailConfirm);
             emailRepository.save(email);
 
-            // Send email
             emailService.sendHtmlEmail("New User", emailTo, emailConfirm.getToken());
         } else {
             throw new RuntimeException("Email already verified for another account");
@@ -122,47 +130,68 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
     }
 
     @Override
-    public void logoutAccount(String token) {
-        try {
-            String[] parts = token.split("\\.");
-            String encodedPayload = parts[1];
-            byte[] decodedBytes = Base64.getUrlDecoder().decode(encodedPayload);
-            String decodedPayload = new String(decodedBytes, "UTF-8");
-
-            // Deserialize JSON payload to a map
-            Map<String, Object> payloadMap = objectMapper.readValue(decodedPayload, new TypeReference<Map<String, Object>>() {});
-
-            // Extract necessary fields from the payload map
-            Integer accountId = (Integer) payloadMap.get("id");
-
-            // Fetch account from database using accountId
-            Account account = accountRepositories.findById(accountId)
-                    .orElseThrow(() -> new RuntimeException("Account not found for id: " + accountId));
-
-            // Perform logout action (e.g., set isActive to false)
-            account.setIsActive(false);
-            accountRepositories.save(account);
-        } catch (Exception e) {
-            throw new RuntimeException("Could not decode or access JWT token payload", e);
+    public void logoutAccount(String email, String token) {
+        Optional<Account> optionalAccount = accountRepositories.findAccountByEmail(email);
+        if (!optionalAccount.isPresent()) {
+            throw new RuntimeException("Account not found for email: " + email);
         }
+
+        Account account = optionalAccount.get();
+        account.setIsActive(false);
+        account.setIsLoggedOut(true);
+        accountRepositories.save(account);
+
+        AccessToken accessToken = accessTokenService.findByToken(token);
+        if (accessToken == null) {
+            throw new RuntimeException("Invalid Bearer Token");
+        }
+
+        accessTokenService.deleteByToken(token);
     }
 
-    /**
-     * saveAccount
-     * <p>
-     * Mô tả:
-     * Đây là bước gân cuối, chỉ sau bước xác thực thông qua email để enable tài khoảng. Hàm saveAccount
-     * sẽ tạo tài khoản trong khi 1 hàm gửi email là sendSimpleMailMessage sẽ được chạy 1 cách không đồng bộ với
-     * hàm saveAccount, để cả thiện thời gian đợi. Thay vì đợi cả 2 hàm tạo tài khoản và gửi mail xác nhận được thành công thì mới
-     * trả response cho client, thì sendSimpleMailMessage sẽ được chạy trên 1 sync khác.
-     *
-     * @param registerRequest 1 DTO request cho việc register
-     * @return 1 đối tượng kiểu Account
-     * @throws RuntimeException Nếu như email đã được sử dụng
-     *                          <p>
-     *                          Tác giả: Trần Anh Tiến
-     *                          Ngày tạo: 16-06-2024
-     */
+    @Override
+    public JwtResponse login(Object principal) {
+        Account account;
+        if (principal instanceof Account) {
+            account = (Account) principal;
+        } else if (principal instanceof UserDetails) {
+            UserDetails userDetails = (UserDetails) principal;
+            account = convertToAccount(userDetails);
+        } else {
+            throw new IllegalStateException("Unexpected principal type: " + principal.getClass());
+        }
+        if (!account.getIsLoggedOut()) {
+            throw new RuntimeException("Account is already logged in.");
+        }
+        account.setIsActive(true);
+        account.setIsLoggedOut(false);
+        accountRepositories.save(account);
+        JwtResponse jwtResponse = jwtTokenService.createJwtResponse(account);
+        System.out.println("==================> Checking " + jwtResponse.getAccessToken());
+        AccessToken accessToken = AccessToken.builder()
+                .token(jwtResponse.getAccessToken())
+                .refreshToken(jwtResponse.getRefreshToken())
+                .issuedAt(System.currentTimeMillis())
+                .expiresAt(jwtResponse.getExpires())
+                .build();
+
+        accessTokenService.saveToken(accessToken);
+
+        return jwtResponse;
+    }
+
+    @Override
+    public boolean waitingForEmailResponse(String email) {
+        Email emailFinding = emailRepository.findEmailByEmailAddress(email);
+        if (emailFinding == null) {
+            return false;
+        }
+        if (emailFinding.isVerified() == true) {
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public Account saveAccount(RegisterRequest registerRequest) {
         if (accountRepositories.existsByEmail(registerRequest.getEmail())) {
@@ -181,10 +210,11 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         accountSaving.setBirthDay(registerRequest.getBirthDay());
         accountSaving.setRoleName("USER");
         accountSaving.setIsActive(registerRequest.isActive());
+        accountSaving.setIsLoggedOut(true);
         accountRepositories.save(accountSaving);
+
         return accountSaving;
     }
-
 
     @Override
     public Account convertToAccount(UserDetails userDetails) {
@@ -209,6 +239,4 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
                 authorities
         );
     }
-
-
 }

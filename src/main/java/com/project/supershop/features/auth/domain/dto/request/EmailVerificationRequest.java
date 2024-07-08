@@ -1,4 +1,4 @@
-package com.project.supershop.features.auth.dto.request;
+package com.project.supershop.features.auth.domain.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

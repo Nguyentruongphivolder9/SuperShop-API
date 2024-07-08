@@ -1,9 +1,11 @@
-package com.project.supershop.features.auth.dto.response;
+package com.project.supershop.features.auth.domain.dto.response;
 
 import com.project.supershop.features.account.domain.entities.Account;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
