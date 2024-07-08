@@ -31,9 +31,17 @@ public class Account extends BaseEntity {
     private String phoneNumber;
     private LocalDateTime birthDay;
     private String gender;
+    private String device;
     private Boolean isActive;
+    private Boolean isLoggedOut;
     private Boolean isEnable;
 
+    public Account(String roles, String name, String email, int id){
+        this.roleName = roles;
+        this.userName = name;
+        this.email = email;
+        this.setId(id);
+    }
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore

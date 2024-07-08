@@ -1,5 +1,6 @@
 package com.project.supershop.features.email.domain.entities;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.project.supershop.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -12,21 +13,30 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "confirmations")
-@NoArgsConstructor
 @Setter
 @Getter
 @SuperBuilder
 public class Confirmation extends BaseEntity {
     private String token;
-    private String email;
 
-    public Confirmation(String email) {
-        this.email = email;
+    @ManyToOne
+    @JoinColumn(name = "email_id")
+    private Email email;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime expiredDay;
+
+    private boolean isVerify;
+
+    public Confirmation() {
         this.token = UUID.randomUUID().toString();
     }
 
     @PrePersist
     protected void onCreate() {
-        this.setCreatedAt(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        this.setCreatedAt(now);
+        setUpdatedAt(now);
+        this.expiredDay = now.plusMinutes(5);
     }
 }

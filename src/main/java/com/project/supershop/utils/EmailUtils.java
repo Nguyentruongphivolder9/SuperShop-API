@@ -12,6 +12,6 @@ public class EmailUtils {
     }
 
     public static String getVerifycationUrl(String serverUrl, String token) {
-        return serverUrl + "/api/v1/auth/send-email?token=" + token;
+        return serverUrl + "/api/v1/auth/verify-email?token=" + token;
     }
 }
