@@ -1,6 +1,7 @@
 package com.project.supershop.features.voucher.domain.entities;
 
 import com.project.supershop.common.BaseEntity;
+import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.features.voucher.domain.dto.requests.VoucherRequest;
 import com.project.supershop.features.voucher.utils.enums.DiscountTypeEnum;
 import com.project.supershop.features.voucher.utils.enums.StatusVoucherEnum;
@@ -12,9 +13,10 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
-@Table(name = "products")
+@Table(name = "vouchers")
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -39,11 +41,16 @@ public class Voucher extends BaseEntity {
     private List<DepotVoucher> depotVouchers;
 
     @OneToMany(mappedBy = "voucher", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<VoucherUsed> voucherUseds;
+    private List<VoucherUsed> vouchersUsed;
+
+    @ManyToOne(cascade = CascadeType.ALL, optional = true)
+    @JoinColumn(name = "shopId")
+    private Account account;
+
 
     public static Voucher createVoucher(VoucherRequest voucherRequest){
-        String fixedType = DiscountTypeEnum.FIXED.getValue();
-        String percentageType = DiscountTypeEnum.PERCENTAGE.getValue();
+        String fixedType = DiscountTypeEnum.FIXED.value();
+        String percentageType = DiscountTypeEnum.PERCENTAGE.value();
         VoucherBuilder<?, ?> voucher =  Voucher.builder()
                 .name(voucherRequest.getName())
                 .code(voucherRequest.getCode())
@@ -70,12 +77,12 @@ public class Voucher extends BaseEntity {
         }
 
         if (voucherRequest.getStartDate().isAfter(LocalDateTime.now())) {
-            voucher.status(StatusVoucherEnum.UPCOMING.getValue());
+            voucher.status(StatusVoucherEnum.UPCOMING.value());
         } else if (voucherRequest.getStartDate().isBefore(LocalDateTime.now())
                 && voucherRequest.getEndDate().isAfter(LocalDateTime.now())) {
-            voucher.status(StatusVoucherEnum.ONGOING.getValue());
+            voucher.status(StatusVoucherEnum.ONGOING.value());
         } else if (voucherRequest.getEndDate().isBefore(LocalDateTime.now())) {
-            voucher.status(StatusVoucherEnum.EXPIRE.getValue());
+            voucher.status(StatusVoucherEnum.EXPIRE.value());
         }
 
         return voucher.build();

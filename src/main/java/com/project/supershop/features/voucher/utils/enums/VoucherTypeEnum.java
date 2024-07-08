@@ -5,9 +5,10 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum DiscountTypeEnum {
-    FIXED("fixed"),
-    PERCENTAGE("percentage");
+public enum VoucherTypeEnum {
+    GLOBAL("global"),
+    SHOP("shop"),
+    SHIPPING("shipping");
 
     private final String value;
 

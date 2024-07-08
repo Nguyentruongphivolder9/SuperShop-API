@@ -19,7 +19,7 @@ public class VoucherUsed extends BaseEntity {
     @JoinColumn(name = "voucherId")
     private Voucher voucher;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.ALL, optional = true)
     @JoinColumn(name = "accountId")
     private Account account;
 }

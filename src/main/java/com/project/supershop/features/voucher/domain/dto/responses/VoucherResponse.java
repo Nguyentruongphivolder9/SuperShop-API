@@ -1,5 +1,6 @@
 package com.project.supershop.features.voucher.domain.dto.responses;
 
+import com.project.supershop.features.account.domain.entities.Account;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 public class VoucherResponse {
     private Integer id;
+    private Integer shopId;
     private String name;
     private String code;
     private String voucherType;
