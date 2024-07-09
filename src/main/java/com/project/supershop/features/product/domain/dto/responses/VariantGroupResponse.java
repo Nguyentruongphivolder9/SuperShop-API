@@ -12,7 +12,7 @@ import java.util.List;
 @Data
 @Builder
 public class VariantGroupResponse {
-    private Integer id;
+    private String id;
     private String name;
     private Boolean isPrimary;
     private Boolean isActive;

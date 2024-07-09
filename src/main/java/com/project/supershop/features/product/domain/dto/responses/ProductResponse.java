@@ -12,7 +12,7 @@ import java.util.List;
 @Data
 @Builder
 public class ProductResponse {
-    private Integer id;
+    private String id;
     private String name;
     private Double price;
     private Integer stockQuantity;

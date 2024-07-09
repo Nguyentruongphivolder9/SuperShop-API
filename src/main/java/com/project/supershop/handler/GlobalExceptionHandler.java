@@ -14,13 +14,27 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler
+    public ResponseEntity<ExceptionResponse> handleConflictException(ConflictException ext){
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(
+                        ExceptionResponse.builder()
+                                .message("Resources are duplicated")
+                                .error(ext.getMessage())
+                                .statusCode(HttpStatus.NOT_FOUND.value())
+                                .build()
+                );
+    }
+
+    @ExceptionHandler
     public ResponseEntity<ExceptionResponse> handleNotFoundException(NotFoundException ext){
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(
                         ExceptionResponse.builder()
-                                .message("Request to page not found")
+                                .message("Resources's not found.")
                                 .error(ext.getMessage())
                                 .statusCode(HttpStatus.NOT_FOUND.value())
                                 .build()

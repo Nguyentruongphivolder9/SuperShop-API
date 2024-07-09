@@ -34,6 +34,10 @@ public class Product extends BaseEntity {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ProductVariant> productVariants;
 
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "categoryId")
+    private Category category;
+
     public static Product createProduct(ProductRequest productRequest){
         return Product.builder()
                 .name(productRequest.getName())

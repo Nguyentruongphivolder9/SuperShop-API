@@ -43,7 +43,7 @@ public class VoucherController {
     }
 
     @RequestMapping(value = "/vouchers/{id}", method = RequestMethod.GET)
-    ResponseEntity<ResultResponse<VoucherResponse>> getVoucher(@PathVariable("id") Integer id,
+    ResponseEntity<ResultResponse<VoucherResponse>> getVoucher(@PathVariable("id") String id,
                                                                   @RequestHeader(name = HttpHeaders.AUTHORIZATION,
                                                                           required = false) String jwtToken){
 
@@ -76,7 +76,7 @@ public class VoucherController {
     }
 
     @RequestMapping(value = "/vouchers/{id}", method = RequestMethod.PATCH)
-    ResponseEntity<ResultResponse<VoucherResponse>> partialUpdateVoucher(@PathVariable("id") Integer id,
+    ResponseEntity<ResultResponse<VoucherResponse>> partialUpdateVoucher(@PathVariable("id") String id,
                                                                @RequestBody VoucherRequest voucherRequest,
                                                                @RequestHeader(name = HttpHeaders.AUTHORIZATION,
                                                                        required = false) String jwtToken){

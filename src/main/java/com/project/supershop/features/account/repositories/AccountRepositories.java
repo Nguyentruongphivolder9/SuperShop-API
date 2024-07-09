@@ -5,12 +5,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 
 @Repository
-public interface AccountRepositories extends JpaRepository<Account, Integer> {
+public interface AccountRepositories extends JpaRepository<Account, UUID> {
     Optional<Account> findAccountByEmail(String email);
-    Account findAccountById(Integer id);
+    Account findAccountById(UUID id);
     boolean existsByEmail(String email);
 
     Optional<Account> findAccountByPhoneNumber(String phoneNumber);
