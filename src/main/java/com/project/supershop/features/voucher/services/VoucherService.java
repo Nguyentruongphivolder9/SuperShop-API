@@ -12,7 +12,7 @@ import java.util.Optional;
 
 public interface VoucherService {
     VoucherResponse createVoucher(VoucherRequest voucherRequest, String jwtToken);
-    VoucherResponse getVoucherById(Integer id);
+    VoucherResponse getVoucherById(String id);
     Page<VoucherResponse> getVouchers(Pageable pageable);
-    VoucherResponse partialUpdate(Integer id, VoucherRequest voucherRequest);
+    VoucherResponse partialUpdate(String id, VoucherRequest voucherRequest);
 }

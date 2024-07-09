@@ -6,9 +6,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface ConfirmationRepository extends JpaRepository<Confirmation, Long> {
+public interface ConfirmationRepository extends JpaRepository<Confirmation, UUID> {
     Confirmation findConfirmationByToken(String token);
     Confirmation findConfirmationByEmail(Email email);
     List<Confirmation> findByEmail(Email email);

@@ -13,6 +13,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "accounts")
@@ -36,11 +37,11 @@ public class Account extends BaseEntity {
     private Boolean isLoggedOut;
     private Boolean isEnable;
 
-    public Account(String roles, String name, String email, int id){
+    public Account(String roles, String name, String email, String id){
         this.roleName = roles;
         this.userName = name;
         this.email = email;
-        this.setId(id);
+        this.setId(UUID.fromString(id));
     }
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

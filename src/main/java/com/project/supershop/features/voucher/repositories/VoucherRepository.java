@@ -8,10 +8,11 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface VoucherRepository extends JpaRepository<Voucher, Integer>, PagingAndSortingRepository<Voucher, Integer> {
+public interface VoucherRepository extends JpaRepository<Voucher, UUID>, PagingAndSortingRepository<Voucher, UUID> {
     Optional<Voucher> findByCode(String code);
-    Optional<Voucher> findById(Integer id);
+    Optional<Voucher> findById(UUID id);
     Page<Voucher> findAll(Pageable pageable);
 }

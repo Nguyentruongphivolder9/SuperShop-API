@@ -1,7 +1,5 @@
 package com.project.supershop.handler;
 
-import java.util.Map;
-
 public class UnprocessableException extends RuntimeException{
     public UnprocessableException(String message) {
         super(message);
