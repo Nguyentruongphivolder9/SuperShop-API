@@ -18,8 +18,11 @@ public class ProductResponse {
     private Integer stockQuantity;
     private String description;
     private String conditionProduct;
+    private Integer sold;
+    private Double ratingStart;
     private Boolean isVariant;
     private Boolean isActive;
+    private CategoryResponse category;
     private List<ProductImagesResponse> productImages;
     private List<VariantGroupResponse> variantsGroup;
     private List<ProductVariantResponse> productVariants;

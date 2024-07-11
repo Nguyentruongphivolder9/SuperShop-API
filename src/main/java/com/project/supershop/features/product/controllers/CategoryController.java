@@ -40,4 +40,16 @@ public class CategoryController {
                         .statusCode(HttpStatus.CREATED.value())
                         .build());
     }
+
+    @GetMapping
+    public ResponseEntity<ResultResponse> getAllCategory() {
+        List<CategoryResponse> result = categoryService.getAllCategories();
+        return ResponseEntity.created(URI.create("")).body(
+                ResultResponse.builder()
+                        .body(result)
+                        .timeStamp(LocalDateTime.now().toString())
+                        .message("get categories successfully")
+                        .statusCode(HttpStatus.CREATED.value())
+                        .build());
+    }
 }
