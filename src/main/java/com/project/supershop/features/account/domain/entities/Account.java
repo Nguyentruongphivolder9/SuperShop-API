@@ -1,7 +1,10 @@
 package com.project.supershop.features.account.domain.entities;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.supershop.common.BaseEntity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import com.project.supershop.features.voucher.domain.entities.Voucher;
+import com.project.supershop.features.voucher.domain.entities.VoucherUsed;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,6 +12,8 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "accounts")
@@ -32,11 +37,18 @@ public class Account extends BaseEntity {
     private Boolean isLoggedOut;
     private Boolean isEnable;
 
-    public Account(String roles, String name, String email, int id){
+    public Account(String roles, String name, String email, String id){
         this.roleName = roles;
         this.userName = name;
         this.email = email;
-        this.setId(id);
+        this.setId(UUID.fromString(id));
     }
 
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Voucher> vouchers;
+
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<VoucherUsed> vouchersUsed;
 }

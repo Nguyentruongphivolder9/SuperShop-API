@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class ProductVariantResponse {
-    private Integer id;
+    private String id;
     private Double price;
     private Integer stockQuantity;
     private VariantResponse variant1;

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class VariantResponse {
-    private Integer id;
+    private String id;
     private String name;
     private String imageUrl;
     private Boolean isActive;

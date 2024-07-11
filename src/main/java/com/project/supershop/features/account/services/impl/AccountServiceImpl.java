@@ -164,9 +164,9 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         } else {
             throw new IllegalStateException("Unexpected principal type: " + principal.getClass());
         }
-        if (!account.getIsLoggedOut()) {
-            throw new RuntimeException("Account is already logged in.");
-        }
+//        if (!account.getIsLoggedOut()) {
+//            throw new RuntimeException("Account is already logged in.");
+//        }
         account.setIsActive(true);
         account.setIsLoggedOut(false);
         accountRepositories.save(account);

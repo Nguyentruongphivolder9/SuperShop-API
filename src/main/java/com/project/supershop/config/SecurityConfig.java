@@ -63,6 +63,7 @@ public class SecurityConfig {
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+
                 .authorizeRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers(new AntPathRequestMatcher("/api/v1/auth/**")).permitAll()
