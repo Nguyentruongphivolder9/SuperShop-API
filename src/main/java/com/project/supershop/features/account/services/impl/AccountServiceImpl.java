@@ -1,5 +1,6 @@
 package com.project.supershop.features.account.services.impl;
 
+import com.project.supershop.features.account.domain.dto.request.WaitingForEmailVerifyRequest;
 import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.features.account.repositories.AccountRepositories;
 import com.project.supershop.features.account.services.AccountService;
@@ -66,11 +67,9 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
                 new UsernameNotFoundException("Account not found with user phone number: " + phoneNumber));
     }
 
-    @Override
     public EmailVerficationResponse verifyToken(String token) {
         EmailVerficationResponse emailResponse = new EmailVerficationResponse();
         Confirmation confirmation = confirmationRepository.findConfirmationByToken(token);
-        Email email = emailRepository.findEmailByConfirmations(confirmation);
 
         if (confirmation == null) {
             emailResponse.setType("Not Found");
@@ -78,33 +77,38 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
             return emailResponse;
         }
 
+        Email email = emailRepository.findEmailByConfirmations(confirmation);
+        if (email == null) {
+            emailResponse.setType("Not Found");
+            emailResponse.setMessage("Email not found for confirmation token.");
+            return emailResponse;
+        }
+
         LocalDateTime expiredDay = confirmation.getExpiredDay();
         LocalDateTime now = LocalDateTime.now();
         emailResponse.setEmail(email.getEmailAddress());
+
         if (expiredDay.isBefore(now)) {
             emailResponse.setType("Expired");
             emailResponse.setMessage("Verification link expired.");
-        }else if(email.isVerified() == true) {
+        } else if (confirmation.isVerify()) {
             emailResponse.setType("Verified");
-            emailResponse.setMessage("Email was already be verified");
-        }
-        else {
-            List<Confirmation> confirmationsList = confirmationRepository.findByEmail(email);
-            for(Confirmation confirmation1 : confirmationsList){
-                confirmationRepository.delete(confirmation1);
-            }
-            email.setVerified(true);
+            emailResponse.setMessage("Verification link was already verified.");
+        } else {
+            emailRepository.save(email);
+            confirmation.setVerify(true);
+            confirmationRepository.save(confirmation);
             emailResponse.setType("Fine");
             emailResponse.setMessage("Verification successful.");
-            emailRepository.save(email);
         }
+
         return emailResponse;
     }
 
     @Override
-    public void processNewEmailVerification(String emailTo) {
+    public String processNewEmailVerification(String emailTo) {
         Optional<Account> accountExists = accountRepositories.findAccountByEmail(emailTo);
-        if (!accountExists.isPresent()) {
+        if (accountExists.isEmpty()) {
             Email email = emailRepository.findEmailByEmailAddress(emailTo);
             if (email == null) {
                 email = new Email();
@@ -122,13 +126,13 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
             }
             confirmationList.add(emailConfirm);
             emailRepository.save(email);
-
             emailService.sendHtmlEmail("New User", emailTo, emailConfirm.getToken());
+            return emailConfirm.getToken();
+
         } else {
             throw new RuntimeException("Email already verified for another account");
         }
     }
-
     @Override
     public void logoutAccount(String email, String token) {
         Optional<Account> optionalAccount = accountRepositories.findAccountByEmail(email);
@@ -181,16 +185,20 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
     }
 
     @Override
-    public boolean waitingForEmailResponse(String email) {
-        Email emailFinding = emailRepository.findEmailByEmailAddress(email);
+    public boolean waitingForEmailResponse(WaitingForEmailVerifyRequest waitingForEmailVerifyRequest) {
+        Email emailFinding = emailRepository.findEmailByEmailAddress(waitingForEmailVerifyRequest.getEmail());
         if (emailFinding == null) {
             return false;
         }
-        if (emailFinding.isVerified() == true) {
-            return true;
+
+        Confirmation emailConfirmation = confirmationRepository.findConfirmationByEmailAndToken(emailFinding, waitingForEmailVerifyRequest.getToken());
+        if (emailConfirmation == null) {
+            return false;
         }
-        return false;
+
+        return emailConfirmation.isVerify();
     }
+
 
     @Override
     public Account saveAccount(RegisterRequest registerRequest) {
