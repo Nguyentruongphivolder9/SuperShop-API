@@ -1,6 +1,7 @@
 package com.project.supershop.features.auth.controller;
 
 import com.project.supershop.features.account.domain.dto.request.LogoutRequest;
+import com.project.supershop.features.account.domain.dto.request.WaitingForEmailVerifyRequest;
 import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.features.account.services.AccountService;
 import com.project.supershop.features.auth.domain.dto.request.EmailVerificationRequest;
@@ -41,98 +42,140 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ResultResponse<JwtResponse>> userLogin(@RequestBody LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
-        );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        Object principal = authentication.getPrincipal();
-
-        JwtResponse jwtResponse = accountService.login(principal);
-        return ResponseEntity.ok(
-                ResultResponse.<JwtResponse>builder()
-                        .timeStamp(LocalDateTime.now().toString())
-                        .body(jwtResponse)
-                        .message("Authentication successfully")
-                        .status(HttpStatus.OK)
-                        .statusCode(HttpStatus.OK.value())
-                        .build()
-        );
+            JwtResponse jwtResponse = accountService.login(authentication.getPrincipal());
+            return ResponseEntity.ok(
+                    ResultResponse.<JwtResponse>builder()
+                            .timeStamp(LocalDateTime.now().toString())
+                            .body(jwtResponse)
+                            .message("Authentication successfully")
+                            .status(HttpStatus.OK)
+                            .statusCode(HttpStatus.OK.value())
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResultResponse.<JwtResponse>builder()
+                            .timeStamp(LocalDateTime.now().toString())
+                            .body(null)
+                            .message("Error logging in: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                            .build()
+            );
+        }
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ResultResponse> accountRegister(@RequestBody RegisterRequest registerRequest) {
-        Account newAccount = accountService.saveAccount(registerRequest);
-        JwtResponse jwtResponse = jwtTokenService.createJwtResponse(newAccount);
-        return ResponseEntity.created(URI.create("")).body(
-                ResultResponse.builder()
-                        .timeStamp(LocalDateTime.now().toString())
-                        .body(jwtResponse)
-                        .message("Register successful")
-                        .status(HttpStatus.CREATED)
-                        .statusCode(HttpStatus.CREATED.value())
-                        .build()
-        );
-
+    public ResponseEntity<ResultResponse<JwtResponse>> accountRegister(@RequestBody RegisterRequest registerRequest) {
+        try {
+            Account newAccount = accountService.saveAccount(registerRequest);
+            JwtResponse jwtResponse = jwtTokenService.createJwtResponse(newAccount);
+            return ResponseEntity.created(URI.create("")).body(
+                    ResultResponse.<JwtResponse>builder()
+                            .timeStamp(LocalDateTime.now().toString())
+                            .body(jwtResponse)
+                            .message("Register successful")
+                            .status(HttpStatus.CREATED)
+                            .statusCode(HttpStatus.CREATED.value())
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResultResponse.<JwtResponse>builder()
+                            .timeStamp(LocalDateTime.now().toString())
+                            .body(null)
+                            .message("Error registering: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                            .build()
+            );
+        }
     }
 
     @PostMapping("/send-email")
-    public ResponseEntity<ResultResponse> sendEmailVerifycation(@RequestBody EmailVerificationRequest emailVerificationRequest) {
-        accountService.processNewEmailVerification(emailVerificationRequest.getEmail());
-        return ResponseEntity.ok().body(
-                ResultResponse.builder()
-                        .timeStamp(LocalDateTime.now().toString())
-                        .body(null)
-                        .message("Verification has been send to your email address.")
-                        .status(HttpStatus.CREATED)
-                        .statusCode(HttpStatus.CREATED.value())
-                        .build()
-        );
-
+    public ResponseEntity<ResultResponse<?>> sendEmailVerification(@RequestBody EmailVerificationRequest emailVerificationRequest) {
+        try {
+            String token = accountService.processNewEmailVerification(emailVerificationRequest.getEmail());
+            return ResponseEntity.ok(
+                    ResultResponse.<String>builder()
+                            .timeStamp(LocalDateTime.now().toString())
+                            .body(token)
+                            .message("Verification email has been sent.")
+                            .status(HttpStatus.OK)
+                            .statusCode(HttpStatus.OK.value())
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResultResponse.<Void>builder()
+                            .timeStamp(LocalDateTime.now().toString())
+                            .body(null)
+                            .message("Error sending verification email: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                            .build()
+            );
+        }
     }
 
     @PostMapping("/waiting-for-email-response")
-    public ResponseEntity<ResultResponse> waitingForEmaiLResponse(@RequestBody LogoutRequest logoutRequest){
-        boolean isValid = accountService.waitingForEmailResponse(logoutRequest.getEmail());
-        return ResponseEntity.ok().body(
-                ResultResponse.builder()
-                        .timeStamp(LocalDateTime.now().toString())
-                        .body(isValid)
-                        .message("Verify is valid")
-                        .status(HttpStatus.CREATED)
-                        .statusCode(HttpStatus.CREATED.value())
-                        .build()
-        );
+    public ResponseEntity<ResultResponse<Boolean>> waitingForEmailResponse(@RequestBody WaitingForEmailVerifyRequest emailVerifyRequest) {
+        System.out.print(emailVerifyRequest.getEmail());
+        System.out.print(emailVerifyRequest.getToken());
+        try {
+            boolean isValid = accountService.waitingForEmailResponse(emailVerifyRequest);
+            return ResponseEntity.ok(
+                    ResultResponse.<Boolean>builder()
+                            .timeStamp(LocalDateTime.now().toString())
+                            .body(isValid)
+                            .message(isValid ? "Verification is valid" : "Verification is not valid")
+                            .status(HttpStatus.OK)
+                            .statusCode(HttpStatus.OK.value())
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResultResponse.<Boolean>builder()
+                            .timeStamp(LocalDateTime.now().toString())
+                            .body(false)
+                            .message("Error checking email verification: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                            .build()
+            );
+        }
     }
+
     @GetMapping("/verify-email")
     public ModelAndView verifyEmail(@RequestParam("token") String token) {
         ModelAndView modelAndView = new ModelAndView();
         EmailVerficationResponse response = accountService.verifyToken(token);
+
         modelAndView.addObject("email", response.getEmail());
+
         switch (response.getType()) {
             case "Fine":
                 modelAndView.addObject("message", "Xác thực cho email " + response.getEmail() + " thành công");
                 modelAndView.setViewName("VerifySuccess");
                 break;
             case "Not Found":
-                modelAndView.addObject("error", response.getMessage());
-                modelAndView.addObject("message", "Email không tìm thấy");
-                modelAndView.setViewName("VerifyError");
-                break;
             case "Expired":
-                modelAndView.addObject("error", response.getMessage());
-                modelAndView.addObject("message", "Xác thực cho email " + response.getEmail() + " đã hết hạn");
-                modelAndView.setViewName("VerifyError");
-                break;
             default:
-                modelAndView.addObject("error", "Unknown error");
-                modelAndView.addObject("message", "Đã xảy ra lỗi không xác định");
+                modelAndView.addObject("error", response.getMessage());
+                modelAndView.addObject("message", "Xác thực email không thành công");
                 modelAndView.setViewName("VerifyError");
                 break;
         }
 
         return modelAndView;
     }
+
 
 
 }

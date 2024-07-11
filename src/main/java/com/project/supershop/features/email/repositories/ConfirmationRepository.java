@@ -13,4 +13,5 @@ public interface ConfirmationRepository extends JpaRepository<Confirmation, UUID
     Confirmation findConfirmationByToken(String token);
     Confirmation findConfirmationByEmail(Email email);
     List<Confirmation> findByEmail(Email email);
+    Confirmation findConfirmationByEmailAndToken (Email email, String token);
 }

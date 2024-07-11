@@ -1,13 +1,11 @@
 package com.project.supershop.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.supershop.features.account.services.AccountService;
 import com.project.supershop.features.account.services.impl.AccountServiceImpl;
 import com.project.supershop.features.auth.filter.JwtAuthorizationFilter;
 import com.project.supershop.features.auth.services.JwtTokenService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
@@ -22,6 +20,9 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -29,11 +30,10 @@ public class SecurityConfig {
 
     private final AccountServiceImpl accountService;
     private final JwtTokenService jwtTokenService;
-    private final ObjectMapper objectMapper;
-    public SecurityConfig(AccountServiceImpl accountService, JwtTokenService jwtTokenService, ObjectMapper objectMapper) {
+
+    public SecurityConfig(AccountServiceImpl accountService, JwtTokenService jwtTokenService) {
         this.accountService = accountService;
         this.jwtTokenService = jwtTokenService;
-        this.objectMapper = objectMapper;
     }
 
     @Bean
@@ -51,23 +51,24 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        JwtAuthorizationFilter jwtAuthorizationFilter = new JwtAuthorizationFilter(jwtTokenService, objectMapper);
+        JwtAuthorizationFilter jwtAuthorizationFilter = new JwtAuthorizationFilter(jwtTokenService, new ObjectMapper());
 
         http
+                .exceptionHandling(exceptionHandling ->
+                        exceptionHandling.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                )
+                .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
+                .sessionManagement(sessionManagement ->
+                        sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
                 .authorizeRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers(new AntPathRequestMatcher("/api/v1/auth/**")).permitAll()
                                 .anyRequest().authenticated()
-                )
-
-                .sessionManagement(sessionManagement ->
-                        sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling(exceptionHandling ->
-                        exceptionHandling.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
+                );
 
         return http.build();
     }

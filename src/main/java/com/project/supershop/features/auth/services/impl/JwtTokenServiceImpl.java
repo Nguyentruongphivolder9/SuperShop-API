@@ -27,7 +27,7 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
 
     private final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
-    private final long accessTokenValidity = 60 * 60 * 1000; // 1 hour
+    private final long accessTokenValidity = 24 * 60 * 60 * 1000; // 1 day
     private final long refreshTokenValidity = 7 * 24 * 60 * 60 * 1000; // 7 days
 
     private final JwtParser jwtParser;
@@ -35,6 +35,7 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
     private final String TOKEN_HEADER = "Authorization";
     private final String TOKEN_PREFIX = "Bearer ";
     private final AccessTokenRepository accessTokenRepository;
+
     public JwtTokenServiceImpl(AccessTokenRepository accessTokenRepository) {
         this.jwtParser = Jwts.parserBuilder().setSigningKey(secretKey).build();
         this.accessTokenRepository = accessTokenRepository;
@@ -91,13 +92,8 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
             String token = resolveToken(req);
 
             if (token != null) {
-                System.out.println("Received JWT token: " + token);
-
                 Claims claims = parseJwtClaims(token);
-
                 String computedSignature = Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getSignature();
-                System.out.println("Computed signature: " + computedSignature);
-
                 if (claims != null && validateClaims(claims)) {
                     return claims;
                 } else {
@@ -149,16 +145,16 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
     @Override
     public void deleteByToken(String token) {
         try {
-           AccessToken accessTokenOptional = accessTokenRepository.findAccessTokenByToken(token);
+            AccessToken accessTokenOptional = accessTokenRepository.findAccessTokenByToken(token);
             if (accessTokenOptional != null) {
                 accessTokenRepository.deleteAccessTokenByToken(token);
             } else {
-                System.out.println("No accessToken found for token: {}"+ token);
+                System.out.println("No accessToken found for token: {}" + token);
                 throw new RuntimeException("No accessToken found for token: " + token);
             }
         } catch (Exception e) {
-            System.out.println("Error deleting accessToken for token: {}"+ token + e.getMessage());
-            throw new RuntimeException("Error deleting accessToken for token: " + token+  e.getMessage());
+            System.out.println("Error deleting accessToken for token: {}" + token + e.getMessage());
+            throw new RuntimeException("Error deleting accessToken for token: " + token + e.getMessage());
         }
     }
 
@@ -167,8 +163,24 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
         try {
             accessTokenRepository.save(accessToken);
         } catch (Exception e) {
-            System.out.println("Error saving accessToken: {}"+ accessToken+  e.getMessage());
+            System.out.println("Error saving accessToken: {}" + accessToken + e.getMessage());
             throw new RuntimeException("Error saving accessToken: " + accessToken, e);
         }
+    }
+
+    //Chuyển Jwt token => claims => Account
+    @Override
+    public Account parseJwtTokenToAccount(String token) {
+        Claims accountClaims = parseJwtClaims(token);
+        Account account = new Account();
+        account.setEmail(accountClaims.getSubject());
+        account.setUserName((String) accountClaims.get("userName"));
+        account.setFullName((String) accountClaims.get("fullName"));
+        account.setRoleName((String) accountClaims.get("role"));
+        account.setPhoneNumber((String) accountClaims.get("phoneNumber"));
+        account.setGender((String) accountClaims.get("gender"));
+        account.setAvatarUrl((String) accountClaims.get("avatarUrl"));
+        account.setIsActive("Online".equals(accountClaims.get("isActive")));
+        return account;
     }
 }
