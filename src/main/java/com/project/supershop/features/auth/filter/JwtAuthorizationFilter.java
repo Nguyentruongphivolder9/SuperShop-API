@@ -1,10 +1,6 @@
 package com.project.supershop.features.auth.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.project.supershop.features.account.domain.entities.Account;
-import com.project.supershop.features.account.repositories.AccountRepositories;
-import com.project.supershop.features.account.services.AccountService;
-import com.project.supershop.features.account.services.impl.AccountServiceImpl;
 import com.project.supershop.features.auth.services.JwtTokenService;
 import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
@@ -26,7 +22,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Component
 public class JwtAuthorizationFilter extends OncePerRequestFilter {

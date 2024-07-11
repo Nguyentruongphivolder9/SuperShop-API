@@ -38,23 +38,36 @@ public class AccountController {
     }
 
 
-    @PostMapping("/logout")
-    public ResponseEntity<ResultResponse> accountLogout(@RequestHeader("Authorization") String authorizationHeader, @RequestBody LogoutRequest logoutRequest) {
+    @PostMapping("/account-logout")
+    public ResponseEntity<ResultResponse> accountLogout(@RequestBody LogoutRequest logoutRequest, @RequestHeader("Authorization") String authorizationHeader) {
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             throw new RuntimeException("Invalid authorization header");
         }
-        String token = authorizationHeader.substring(7);
 
-        accountService.logoutAccount(logoutRequest.getEmail(), token);
-        return ResponseEntity.ok(
-                ResultResponse.<List<Account>>builder()
-                        .timeStamp(LocalDateTime.now().toString())
-                        .body(null)
-                        .message("Account with email: " + logoutRequest.getEmail() + " logged out successfully")
-                        .status(HttpStatus.OK)
-                        .statusCode(HttpStatus.OK.value())
-                        .build()
-        );
+        String token = authorizationHeader.substring(7);
+        System.out.print(token);
+        try {
+            accountService.logoutAccount(logoutRequest.getEmail(), token);
+            return ResponseEntity.ok(
+                    ResultResponse.<List<Account>>builder()
+                            .timeStamp(LocalDateTime.now().toString())
+                            .body(null)
+                            .message("Account with email: " + logoutRequest.getEmail() + " logged out successfully")
+                            .status(HttpStatus.OK)
+                            .statusCode(HttpStatus.OK.value())
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ResultResponse.<List<Account>>builder()
+                            .timeStamp(LocalDateTime.now().toString())
+                            .body(null)
+                            .message("Error logging out: " + e.getMessage())
+                            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                            .build()
+            );
+        }
     }
 
 
