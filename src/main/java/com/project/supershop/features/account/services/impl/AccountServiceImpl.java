@@ -15,6 +15,7 @@ import com.project.supershop.features.email.domain.entities.Email;
 import com.project.supershop.features.email.repositories.ConfirmationRepository;
 import com.project.supershop.features.email.repositories.EmailRepository;
 import com.project.supershop.features.email.sevices.EmailService;
+import jakarta.annotation.Resource;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -22,7 +23,12 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +43,8 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
     private final AccountRepositories accountRepositories;
     private final ConfirmationRepository confirmationRepository;
     private final EmailRepository emailRepository;
+    private final String FEMALE_DEFAULT_AVATAR = "src/main/java/com/project/supershop/access/images/defaultAvatar/femaleAvatar/female.png";
+    private final String MALE_DEFAULT_AVATAR = "src/main/java/com/project/supershop/access/images/defaultAvatar/maleAvatar/male.png";
 
     private final JwtTokenService jwtTokenService;
     private final AccessTokenService accessTokenService;
@@ -171,7 +179,6 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         account.setIsLoggedOut(false);
         accountRepositories.save(account);
         JwtResponse jwtResponse = jwtTokenService.createJwtResponse(account);
-        System.out.println("==================> Checking " + jwtResponse.getAccessToken());
         AccessToken accessToken = AccessToken.builder()
                 .token(jwtResponse.getAccessToken())
                 .refreshToken(jwtResponse.getRefreshToken())
@@ -199,7 +206,17 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         return emailConfirmation.isVerify();
     }
 
-
+    public LocalDateTime parseStringToLocalDateTime(String dateString) {
+        // Định nghĩa định dạng của chuỗi ngày tháng
+        ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateString);
+        try {
+            // Chuyển đổi chuỗi thành LocalDateTime
+            return zonedDateTime.toLocalDateTime();
+        } catch (DateTimeParseException e) {
+            // Xử lý ngoại lệ nếu không thể parse thành công
+            throw new IllegalArgumentException("Invalid birth_day format", e);
+        }
+    }
     @Override
     public Account saveAccount(RegisterRequest registerRequest) {
         if (accountRepositories.existsByEmail(registerRequest.getEmail())) {
@@ -207,23 +224,31 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         }
         registerRequest.setEnable(false);
         Account accountSaving = new Account();
-        accountSaving.setUserName(registerRequest.getUserName());
-        accountSaving.setFullName(registerRequest.getFullName());
+        accountSaving.setUserName(registerRequest.getUser_name());
+        accountSaving.setFullName(registerRequest.getFull_name());
         accountSaving.setPassword(registerRequest.getPassword());
-        accountSaving.setAvatarUrl(registerRequest.getAvatarUrl());
-        accountSaving.setPhoneNumber(registerRequest.getPhoneNumber());
+        accountSaving.setPhoneNumber(registerRequest.getPhone_number());
         accountSaving.setEmail(registerRequest.getEmail());
         accountSaving.setIsEnable(false);
         accountSaving.setGender(registerRequest.getGender());
-        accountSaving.setBirthDay(registerRequest.getBirthDay());
+        // Chuyển đổi birth_day từ chuỗi sang LocalDateTime
+        try {
+            LocalDateTime birthDay = parseStringToLocalDateTime(registerRequest.getBirth_day());
+            accountSaving.setBirthDay(birthDay);
+        } catch (IllegalArgumentException e) {
+            System.out.print(e.getMessage());
+            throw new IllegalArgumentException("Invalid birth_day format.", e);
+        }
+
         accountSaving.setRoleName("USER");
         accountSaving.setIsActive(registerRequest.isActive());
         accountSaving.setIsLoggedOut(true);
+
+        // Lưu tài khoản vào cơ sở dữ liệu
         accountRepositories.save(accountSaving);
 
         return accountSaving;
     }
-
     @Override
     public Account convertToAccount(UserDetails userDetails) {
         return accountRepositories.findAccountByEmail(userDetails.getUsername()).orElseThrow(() ->
