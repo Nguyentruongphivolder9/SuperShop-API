@@ -22,4 +22,8 @@ public class AvatarServiceImpl implements AvatarService {
             throw new RuntimeException("Error while loading file image");
         }
     }
+    @Override
+    public void printData(String path){
+        System.out.print("==========> " +path);
+    }
 }

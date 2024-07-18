@@ -43,8 +43,8 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
     private final AccountRepositories accountRepositories;
     private final ConfirmationRepository confirmationRepository;
     private final EmailRepository emailRepository;
-    private final String FEMALE_DEFAULT_AVATAR = "src/main/java/com/project/supershop/access/images/defaultAvatar/femaleAvatar/female.png";
-    private final String MALE_DEFAULT_AVATAR = "src/main/java/com/project/supershop/access/images/defaultAvatar/maleAvatar/male.png";
+    private final String FEMALE_DEFAULT_URL_AVATAR = "http://localhost:8080/api/v1/avatar/static/defaultAvatar/femaleAvatar/female.png";
+    private final String MALE_DEFAULT_URL_AVATAR = "http://localhost:8080/api/v1/avatar/static/defaultAvatar/maleAvatar/male.png";
 
     private final JwtTokenService jwtTokenService;
     private final AccessTokenService accessTokenService;
@@ -231,6 +231,11 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         accountSaving.setEmail(registerRequest.getEmail());
         accountSaving.setIsEnable(false);
         accountSaving.setGender(registerRequest.getGender());
+        if (registerRequest.getGender().equals("male")) {
+            accountSaving.setAvatarUrl(MALE_DEFAULT_URL_AVATAR);
+        } else {
+            accountSaving.setAvatarUrl(FEMALE_DEFAULT_URL_AVATAR);
+        }
         // Chuyển đổi birth_day từ chuỗi sang LocalDateTime
         try {
             LocalDateTime birthDay = parseStringToLocalDateTime(registerRequest.getBirth_day());

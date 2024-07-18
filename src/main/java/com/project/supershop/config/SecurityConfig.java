@@ -67,6 +67,7 @@ public class SecurityConfig {
                 .authorizeRequests(authorizeRequests ->
                         authorizeRequests
                                 .requestMatchers(new AntPathRequestMatcher("/api/v1/auth/**")).permitAll()
+                                .requestMatchers(new AntPathRequestMatcher("/api/v1/avatar/**")).permitAll()
                                 .anyRequest().authenticated()
                 );
 
