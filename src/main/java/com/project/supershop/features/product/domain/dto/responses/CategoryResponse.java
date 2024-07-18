@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -13,4 +15,6 @@ public class CategoryResponse {
     private String parentId;
     private Boolean isActive;
     private Boolean isChild;
+    private List<CategoryResponse> categoriesChild;
+    private List<CategoryImageResponse> categoryImages;
 }

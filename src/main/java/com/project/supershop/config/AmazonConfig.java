@@ -16,7 +16,7 @@ public class AmazonConfig {
         // AKIA4MTWKTH6TAA3SYGR
         // USAMFcqltwrQPYBa/UiG9HoPwmNfCnIMm8pd7T2n
         AWSCredentials awsCredentials =
-                new BasicAWSCredentials("", "");
+                new BasicAWSCredentials("AKIA4MTWKTH6TAA3SYGR", "USAMFcqltwrQPYBa/UiG9HoPwmNfCnIMm8pd7T2n");
         return AmazonS3ClientBuilder
                 .standard()
                 .withRegion("ap-south-1")
