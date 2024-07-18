@@ -22,6 +22,8 @@ public class Product extends BaseEntity {
     private Integer stockQuantity;
     private String description;
     private String conditionProduct;
+    private Integer sold;
+    private Double ratingStart;
     private Boolean isVariant;
     private Boolean isActive;
 
@@ -45,6 +47,8 @@ public class Product extends BaseEntity {
                 .stockQuantity(productRequest.getStockQuantity())
                 .conditionProduct(productRequest.getConditionProduct())
                 .description(productRequest.getDescription())
+                .sold(0)
+                .ratingStart(0.0)
                 .isVariant(productRequest.getIsVariant())
                 .isActive(productRequest.getIsActive())
                 .build();
