@@ -21,6 +21,5 @@ public class CategoryRequest {
     private String isActive;
     @NotBlank(message = "isChild can not null")
     private String isChild;
-    @NotNull(message = "imageFiles can not null")
     private MultipartFile[] imageFiles;
 }
