@@ -26,7 +26,6 @@ import java.util.Optional;
 public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService {
 
     private final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-
     private final long accessTokenValidity = 24 * 60 * 60 * 1000; // 1 day
     private final long refreshTokenValidity = 7 * 24 * 60 * 60 * 1000; // 7 days
 

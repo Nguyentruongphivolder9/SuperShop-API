@@ -7,8 +7,11 @@ import com.project.supershop.features.auth.domain.dto.request.LoginRequest;
 import com.project.supershop.features.auth.domain.dto.request.RegisterRequest;
 import com.project.supershop.features.auth.domain.dto.response.EmailVerficationResponse;
 import com.project.supershop.features.auth.domain.dto.response.JwtResponse;
+import jakarta.annotation.Resource;
+import org.hibernate.ResourceClosedException;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.nio.file.Path;
 import java.security.Principal;
 import java.util.List;
 

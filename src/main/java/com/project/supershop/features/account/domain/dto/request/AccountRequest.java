@@ -25,6 +25,7 @@ public class AccountRequest {
     @NotNull(message = "User password can't be left empty")
     private String password;
 
+    private String confirmPassword;
     @NotBlank(message = "User full name can't be blank")
     @NotNull(message = "User full name can't be left empty")
     private String fullName;
