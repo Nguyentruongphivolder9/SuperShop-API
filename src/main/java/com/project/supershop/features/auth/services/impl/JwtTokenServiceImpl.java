@@ -1,6 +1,7 @@
 package com.project.supershop.features.auth.services.impl;
 
 import com.project.supershop.features.account.domain.entities.Account;
+import com.project.supershop.features.account.services.AccountService;
 import com.project.supershop.features.auth.domain.dto.response.JwtResponse;
 import com.project.supershop.features.auth.domain.entities.AccessToken;
 import com.project.supershop.features.auth.repositories.AccessTokenRepository;
@@ -35,8 +36,9 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
     private final String TOKEN_HEADER = "Authorization";
     private final String TOKEN_PREFIX = "Bearer ";
     private final AccessTokenRepository accessTokenRepository;
-
-    public JwtTokenServiceImpl(AccessTokenRepository accessTokenRepository) {
+    private final AccountService accountService;
+    public JwtTokenServiceImpl(AccessTokenRepository accessTokenRepository, AccountService accountService) {
+        this.accountService = accountService;
         this.jwtParser = Jwts.parserBuilder().setSigningKey(secretKey).build();
         this.accessTokenRepository = accessTokenRepository;
     }
@@ -169,18 +171,14 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
     }
 
     //Chuyển Jwt token => claims => Account
-    @Override
     public Account parseJwtTokenToAccount(String token) {
-        Claims accountClaims = parseJwtClaims(token);
-        Account account = new Account();
-        account.setEmail(accountClaims.getSubject());
-        account.setUserName((String) accountClaims.get("userName"));
-        account.setFullName((String) accountClaims.get("fullName"));
-        account.setRoleName((String) accountClaims.get("role"));
-        account.setPhoneNumber((String) accountClaims.get("phoneNumber"));
-        account.setGender((String) accountClaims.get("gender"));
-        account.setAvatarUrl((String) accountClaims.get("avatarUrl"));
-        account.setIsActive("Online".equals(accountClaims.get("isActive")));
-        return account;
+        String accessToken = token.substring(7);
+        Claims accountClaims = parseJwtClaims(accessToken);
+
+        Account accountFinding = accountService.findByEmail(accountClaims.getSubject());
+        if(accountFinding == null){
+            throw new RuntimeException("Account not found");
+        }
+        return accountFinding;
     }
 }
