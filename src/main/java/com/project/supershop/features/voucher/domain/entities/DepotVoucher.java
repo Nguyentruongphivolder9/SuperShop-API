@@ -2,6 +2,7 @@ package com.project.supershop.features.voucher.domain.entities;
 
 import com.project.supershop.common.BaseEntity;
 import com.project.supershop.features.account.domain.entities.Account;
+import com.project.supershop.features.voucher.domain.dto.requests.DepotVoucherRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,11 +16,12 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 public class DepotVoucher extends BaseEntity {
-    @ManyToOne(cascade = CascadeType.ALL)
+    private Integer quantity;
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "voucherId")
     private Voucher voucher;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "accountId")
     private Account account;
 }
