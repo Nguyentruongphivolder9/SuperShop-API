@@ -52,7 +52,7 @@ public class PreviewImageServiceImpl implements PreviewImageService {
     @Override
     public void deletePreviewImage(String id) {
         Optional<PreviewImage> previewImage = previewImageRepository.findById(UUID.fromString(id));
-        fileUploadUtils.deleteFile("products", previewImage.get().getPreImageUrl());
+        fileUploadUtils.deleteFile("products", previewImage.get().getImageUrl());
         previewImageRepository.deleteById(UUID.fromString(id));
     }
 }

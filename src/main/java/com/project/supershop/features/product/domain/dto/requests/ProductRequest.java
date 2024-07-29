@@ -18,6 +18,7 @@ public class ProductRequest {
     private Double price;
     private Integer stockQuantity;
     private String conditionProduct;
+    private String categoryId;
     private String description;
     private Boolean isVariant;
     private Boolean isActive;

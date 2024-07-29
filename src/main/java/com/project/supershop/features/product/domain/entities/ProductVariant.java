@@ -29,11 +29,13 @@ public class ProductVariant extends BaseEntity {
     @JoinColumn(name = "variant2Id")
     private Variant variant2;
 
-    public static ProductVariant createVariant(ProductVariantRequest productVariantRequest, Product product){
+    public static ProductVariant createVariant(ProductVariantRequest productVariantRequest, Product product, Variant variant1, Variant variant2){
         return ProductVariant.builder()
                 .price(productVariantRequest.getPrice())
                 .stockQuantity(productVariantRequest.getStockQuantity())
                 .product(product)
+                .variant1(variant1)
+                .variant2(variant2)
                 .build();
     }
 }

@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @Data
 public class PreviewImageResponse {
     private String id;
-    private String preImageUrl;
+    private String imageUrl;
 }

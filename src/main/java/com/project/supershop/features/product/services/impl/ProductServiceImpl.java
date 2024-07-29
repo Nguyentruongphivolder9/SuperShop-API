@@ -1,21 +1,21 @@
 package com.project.supershop.features.product.services.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.supershop.features.product.domain.dto.requests.*;
 import com.project.supershop.features.product.domain.dto.responses.ProductResponse;
 import com.project.supershop.features.product.domain.entities.*;
 import com.project.supershop.features.product.repositories.*;
 import com.project.supershop.features.product.services.ProductService;
+import com.project.supershop.handler.NotFoundException;
 import com.project.supershop.handler.UnprocessableException;
-import com.project.supershop.services.FileUploadUtils;
 import io.github.dengliming.redismodule.redisjson.RedisJSON;
 import io.github.dengliming.redismodule.redisjson.args.SetArgs;
 import io.github.dengliming.redismodule.redisjson.utils.GsonUtils;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.util.*;
 
 @Service
@@ -28,17 +28,19 @@ public class ProductServiceImpl implements ProductService {
     private final ProductVariantRepository productVariantRepository;
     private final ProductImageRepository productImageRepository;
     private final PreviewImageRepository previewImageRepository;
+    private final CategoryRepository categoryRepository;
     private final RedisJSON redisJSON;
 
-    public ProductServiceImpl(ModelMapper modelMapper, PreviewImageRepository previewImageRepository, ProductImageRepository productImageRepository, RedisJSON redisJSON, ProductVariantRepository productVariantRepository, VariantGroupRepository variantGroupRepository, ProductRepository productRepository, VariantRepository variantRepository) {
+    public ProductServiceImpl(ModelMapper modelMapper, ProductRepository productRepository, VariantGroupRepository variantGroupRepository, VariantRepository variantRepository, ProductVariantRepository productVariantRepository, ProductImageRepository productImageRepository, PreviewImageRepository previewImageRepository, CategoryRepository categoryRepository, RedisJSON redisJSON) {
         this.modelMapper = modelMapper;
-        this.variantGroupRepository = variantGroupRepository;
         this.productRepository = productRepository;
+        this.variantGroupRepository = variantGroupRepository;
         this.variantRepository = variantRepository;
         this.productVariantRepository = productVariantRepository;
-        this.redisJSON = redisJSON;
         this.productImageRepository = productImageRepository;
         this.previewImageRepository = previewImageRepository;
+        this.categoryRepository = categoryRepository;
+        this.redisJSON = redisJSON;
     }
 
     @Override
@@ -47,7 +49,18 @@ public class ProductServiceImpl implements ProductService {
         List<Variant> variants = new ArrayList<>();
         List<ProductVariant> productVariants = new ArrayList<>();
         List<ProductImage> productImages = new ArrayList<>();
-        Product product = Product.createProduct(productRequest);
+
+        if(productRequest.getCategoryId().isEmpty()){
+            throw new UnprocessableException("The categoryId field can't be empty.");
+        }
+
+        Optional<Category> resultCateFindById = categoryRepository.findById(Integer.parseInt(productRequest.getCategoryId()));
+        if(resultCateFindById.isEmpty()) {
+            throw new NotFoundException(productRequest.getCategoryId() + " does not exist");
+        }
+
+
+        Product product = Product.createProduct(productRequest, resultCateFindById.get());
         Product  productResult = productRepository.save(product);
 
         if(productRequest.getProductImages().isEmpty() || productRequest.getProductImages().size() < 3){
@@ -98,13 +111,11 @@ public class ProductServiceImpl implements ProductService {
                 && !productRequest.getProductVariants().isEmpty()
         ){
             Set<String> variantGroupNames = new HashSet<>();
-            Set<String> variantGroupIds = new HashSet<>();
             Map<String, Set<String>> variantsGroupMap = new HashMap<>();
 
             for (VariantGroupRequest groupRequest : productRequest.getVariantsGroup()) { // kiểm tra xem field name của variantsGroup không được trùng nhau
                 if (
-                        !variantGroupNames.add(groupRequest.getName()) ||
-                                !variantGroupIds.add(groupRequest.getId())
+                        !variantGroupNames.add(groupRequest.getName())
                 ) {
                     throw new UnprocessableException(groupRequest.getName() + " is the same as the variation name of another variation");
                 }
@@ -117,22 +128,39 @@ public class ProductServiceImpl implements ProductService {
                 Set<String> variantIds = new HashSet<>();
                 for (VariantRequest variantRequest : groupRequest.getVariants()) {
                     if (
-                            !variantNames.add(variantRequest.getName()) ||
-                                    !variantIds.add(variantRequest.getId())
+                            !variantNames.add(variantRequest.getName())
                     ) { // kiểm tra xem các field name của variant không được trùng nhau
                         throw new UnprocessableException(variantRequest.getName() + " is the same as the variant name of another variant");
                     }
 
-                    if (!groupRequest.getIsPrimary() && (variantRequest.getImageUrl() != null && !variantRequest.getImageUrl().isEmpty())) { // kiểm tra isPrimary là true thì variant mới được chứa hình ảnh hoặc null
+                    if (!groupRequest.getIsPrimary() && (variantRequest.getVariantImage().getImageUrl() != null)) { //kiểm tra isPrimary là true thì variant mới được chứa hình ảnh hoặc null
                         throw new UnprocessableException("IsPrimary field is true, then the new variant will contain an image or null");
                     }
 
+                    if(variantRequest.getVariantImage().getId() != null) {
+                        previewImageRepository.deleteById(UUID.fromString(variantRequest.getVariantImage().getId()));
+                    }
 
-                    Variant variant = Variant.createVariant(variantRequest.getName(), variantRequest.getImageUrl(), variantGroupResult);
+
+                    Variant variant = Variant.createVariant(variantRequest.getName(), variantRequest.getVariantImage().getImageUrl(), variantGroupResult);
                     Variant variantResult = variantRepository.save(variant);
+                    variantIds.add(variantResult.getId().toString());
+
+                    for(ProductVariantRequest productVariantRequest : productRequest.getProductVariants()){
+                        if(productVariantRequest.getVariantsGroup1Id().equals(groupRequest.getId())
+                                && productVariantRequest.getVariant1Id().equals(variantRequest.getId())){
+                            productVariantRequest.setVariant1Id(variantResult.getId().toString());
+                            productVariantRequest.setVariantsGroup1Id(variantGroupResult.getId().toString());
+                        }
+                        if(productVariantRequest.getVariantsGroup2Id().equals(groupRequest.getId())
+                                && productVariantRequest.getVariant2Id().equals(variantRequest.getId())){
+                            productVariantRequest.setVariant2Id(variantResult.getId().toString());
+                            productVariantRequest.setVariantsGroup2Id(variantGroupResult.getId().toString());
+                        }
+                    }
                     variants.add(variantResult);
                 }
-                variantsGroupMap.put(groupRequest.getId(), variantIds);
+                variantsGroupMap.put(variantGroupResult.getId().toString(), variantIds);
             }
 
             Set<String> variantPairs = new HashSet<>();
@@ -162,14 +190,8 @@ public class ProductServiceImpl implements ProductService {
                     throw new UnprocessableException("The product stock field can't be empty or less than 0.");
                 }
 
-                // Kiểm tra chỉ có một variantsGroup và không có variantsGroup2 và variant2Id
+                // Kiểm tra khi chỉ có một variantsGroup thì sẽ không có variantsGroup2 và variant2Id trong productVariant
                 if (variantGroups.size() == 1 && variantRequest.getVariantsGroup2Id() == null && variantRequest.getVariant2Id() == null) {
-                    ProductVariant productVariantBuild = ProductVariant.createVariant(variantRequest, productResult);
-
-                    // Kiểm tra không thể có variant2Id nếu chỉ có một variantsGroup
-                    if (variantRequest.getVariant2Id() != null) {
-                        throw new UnprocessableException("variant2Id should not be provided when there is only one variantsGroup");
-                    }
 
                     // Kiểm tra chỉ có một variant1Id trong mỗi variantsGroup1
                     if (!variantExistsOneVariantGroup.add(variantRequest.getVariant1Id())) {
@@ -177,14 +199,17 @@ public class ProductServiceImpl implements ProductService {
                     }
 
                     // Tìm variant1 và thiết lập vào productVariantBuild
+                    Variant variant1 = null;
+                    Variant variant2 = null;
                     for (Variant variant : variants) {
-                        if (variant.getName().equals(variantRequest.getVariant1Id())) {
-                            productVariantBuild.setVariant1(variant);
+                        if (variant.getId().equals(variantRequest.getVariant1Id())) {
+                            variant1 = variant;
                             break;
                         }
                     }
 
                     // Lưu ProductVariant và thêm vào danh sách productVariants
+                    ProductVariant productVariantBuild = ProductVariant.createVariant(variantRequest, productResult, variant1, variant2);
                     ProductVariant productVariant = productVariantRepository.save(productVariantBuild);
                     productVariants.add(productVariant);
                 } else {
@@ -211,21 +236,25 @@ public class ProductServiceImpl implements ProductService {
                     }
 
                     // Tạo ProductVariant và thiết lập variant1 và variant2 vào đó
-                    ProductVariant productVariantBuild = ProductVariant.createVariant(variantRequest, productResult);
+                    Variant variant1 = null;
+                    Variant variant2 = null;
                     for (Variant variant : variants) {
-                        if (variant.getName().equals(variantRequest.getVariant1Id())) {
-                            productVariantBuild.setVariant1(variant);
+                        if (variant.getId().toString().equals(variantRequest.getVariant1Id())) {
+                            variant1 = variant;
                         }
-                        if (variant.getName().equals(variantRequest.getVariant2Id())) {
-                            productVariantBuild.setVariant2(variant);
+                        if (variant.getId().toString().equals(variantRequest.getVariant2Id())) {
+                            variant2 = variant;
                         }
                     }
 
                     // Lưu ProductVariant và thêm vào danh sách productVariants
+                    ProductVariant productVariantBuild = ProductVariant.createVariant(variantRequest, productResult, variant1, variant2);
                     ProductVariant productVariant = productVariantRepository.save(productVariantBuild);
                     productVariants.add(productVariant);
                 }
             }
+
+
         }
 
         for (VariantGroup variantGroup : variantGroups){
@@ -246,5 +275,24 @@ public class ProductServiceImpl implements ProductService {
         String key = "product:" + productResponse.getId();
         redisJSON.set(key, SetArgs.Builder.create(".", GsonUtils.toJson(productResponse)));
         return productResponse;
+    }
+
+    @Override
+    public Page<ProductResponse> getListProduct(Pageable pageable) {
+        Page<Product> products = productRepository.findAll(pageable);
+        return products.map(product -> {
+            modelMapper.typeMap(Product.class, ProductResponse.class);
+            return modelMapper.map(product, ProductResponse.class);
+        });
+    }
+
+    @Override
+    public ProductResponse getProductById(String id) {
+        return productRepository.findByProductId(UUID.fromString(id))
+                .map(product -> {
+                    modelMapper.typeMap(Product.class, ProductResponse.class);
+                    return modelMapper.map(product, ProductResponse.class);
+                })
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
     }
 }
