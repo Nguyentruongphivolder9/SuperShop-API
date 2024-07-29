@@ -27,8 +27,7 @@ public class CategoryController {
     }
 
     @PostMapping(
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
     public ResponseEntity<ResultResponse> create(@Valid @ModelAttribute CategoryRequest request) throws IOException {
         CategoryResponse result = categoryService.createCategory(request);

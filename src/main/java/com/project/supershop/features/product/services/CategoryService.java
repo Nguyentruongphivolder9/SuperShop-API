@@ -10,6 +10,6 @@ public interface CategoryService {
     CategoryResponse createCategory(CategoryRequest categoryRequest) throws IOException;
 
     List<CategoryResponse> getAllCategories();
-    CategoryResponse getCategoryById(String id);
-    void deleteCategoryById(String id);
+    CategoryResponse getCategoryById(Integer id);
+    void deleteCategoryById(Integer id);
 }

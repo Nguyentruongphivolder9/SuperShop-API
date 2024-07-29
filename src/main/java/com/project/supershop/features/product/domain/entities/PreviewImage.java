@@ -19,11 +19,11 @@ public class PreviewImage {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
-    private String preImageUrl;
+    private String imageUrl;
 
     public static PreviewImage createProduct(String preImageUrl){
         return PreviewImage.builder()
-                .preImageUrl(preImageUrl)
+                .imageUrl(preImageUrl)
                 .build();
     }
 }
