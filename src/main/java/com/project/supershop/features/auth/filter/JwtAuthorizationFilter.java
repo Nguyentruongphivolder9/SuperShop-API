@@ -1,6 +1,7 @@
 package com.project.supershop.features.auth.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.project.supershop.features.auth.providers.SecretKeyProvider;
 import com.project.supershop.features.auth.services.JwtTokenService;
 import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
 
+import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,14 +29,14 @@ import java.util.Map;
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthorizationFilter.class);
-
+    private final SecretKeyProvider secretKeyProvider;
     private final JwtTokenService jwtTokenService;
     private final ObjectMapper mapper;
 
-    public JwtAuthorizationFilter(JwtTokenService jwtTokenService, ObjectMapper mapper) {
+    public JwtAuthorizationFilter(JwtTokenService jwtTokenService, ObjectMapper mapper, SecretKeyProvider secretKeyProvider) {
         this.jwtTokenService = jwtTokenService;
         this.mapper = mapper;
-
+        this.secretKeyProvider = secretKeyProvider;
     }
 
     @Override
@@ -43,8 +45,9 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         try {
             String accessToken = jwtTokenService.resolveToken(request);
             if (accessToken != null) {
-                Claims claims = jwtTokenService.resolveClaims(request);
-                if (claims != null && jwtTokenService.validateClaims(claims)) {
+                SecretKey secretKey = secretKeyProvider.getSecretKey();
+                Claims claims = jwtTokenService.resolveClaims(accessToken, secretKey);
+                if (claims != null && jwtTokenService.validateClaims(claims, secretKey)) {
                     String email = claims.getSubject();
                     Authentication authentication = new UsernamePasswordAuthenticationToken(email, "", new ArrayList<>());
                     SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -56,6 +59,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
         }
         filterChain.doFilter(request, response);
     }
+
 
     private void handleException(HttpServletResponse response, Exception e) throws IOException {
         Map<String, Object> errorDetails = new HashMap<>();

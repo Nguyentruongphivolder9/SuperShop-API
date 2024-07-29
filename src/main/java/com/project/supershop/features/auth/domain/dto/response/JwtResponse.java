@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.security.Key;
 import java.time.LocalDateTime;
 
 @Data
@@ -15,5 +16,6 @@ public class JwtResponse {
     private String refreshToken;
     private long expireRefreshToken;
     private long expires;
+    private String secretKey;
     private Account account;
 }

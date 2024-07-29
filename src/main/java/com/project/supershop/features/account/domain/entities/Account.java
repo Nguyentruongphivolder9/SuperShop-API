@@ -2,6 +2,7 @@ package com.project.supershop.features.account.domain.entities;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.supershop.common.BaseEntity;
+import com.project.supershop.features.account.utils.enums.Provider;
 import com.project.supershop.features.voucher.domain.entities.Voucher;
 import com.project.supershop.features.voucher.domain.entities.VoucherUsed;
 import jakarta.persistence.*;
@@ -36,6 +37,8 @@ public class Account extends BaseEntity {
     private Boolean isActive;
     private Boolean isLoggedOut;
     private Boolean isEnable;
+    //Phương thức user đã dùng để đăng nhâp
+    private String provider;
 
     public Account(String roles, String name, String email, String id){
         this.roleName = roles;
@@ -43,6 +46,11 @@ public class Account extends BaseEntity {
         this.email = email;
         this.setId(UUID.fromString(id));
     }
+
+
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Address> addresses;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore

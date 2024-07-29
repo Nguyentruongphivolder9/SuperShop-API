@@ -1,4 +1,4 @@
-package com.project.supershop.utils;
+package com.project.supershop.features.email.utils;
 
 
 public class EmailUtils {

@@ -1,7 +1,7 @@
 package com.project.supershop.features.email.sevices.impl;
 
 import com.project.supershop.features.email.sevices.EmailService;
-import com.project.supershop.utils.EmailUtils;
+import com.project.supershop.features.email.utils.EmailUtils;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;

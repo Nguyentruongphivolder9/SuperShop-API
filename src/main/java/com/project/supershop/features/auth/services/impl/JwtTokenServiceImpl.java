@@ -1,22 +1,21 @@
 package com.project.supershop.features.auth.services.impl;
 
 import com.project.supershop.features.account.domain.entities.Account;
+import com.project.supershop.features.account.services.AccountService;
 import com.project.supershop.features.auth.domain.dto.response.JwtResponse;
 import com.project.supershop.features.auth.domain.entities.AccessToken;
+import com.project.supershop.features.auth.providers.SecretKeyProvider;
 import com.project.supershop.features.auth.repositories.AccessTokenRepository;
 import com.project.supershop.features.auth.services.AccessTokenService;
 import com.project.supershop.features.auth.services.JwtTokenService;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Key;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Optional;
@@ -24,24 +23,31 @@ import java.util.Optional;
 @Service
 @Transactional
 public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService {
-
-    private final Key secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     private final long accessTokenValidity = 24 * 60 * 60 * 1000; // 1 day
     private final long refreshTokenValidity = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-    private final JwtParser jwtParser;
+    private final SecretKeyProvider secretKeyProvider;
 
     private final String TOKEN_HEADER = "Authorization";
     private final String TOKEN_PREFIX = "Bearer ";
     private final AccessTokenRepository accessTokenRepository;
 
-    public JwtTokenServiceImpl(AccessTokenRepository accessTokenRepository) {
-        this.jwtParser = Jwts.parserBuilder().setSigningKey(secretKey).build();
+    private AccountService accountService;
+
+    public JwtTokenServiceImpl(AccessTokenRepository accessTokenRepository, SecretKeyProvider secretKeyProvider) {
         this.accessTokenRepository = accessTokenRepository;
+        this.secretKeyProvider = secretKeyProvider;
     }
+
+    @Autowired
+    public void setAccountService(AccountService accountService) {
+        this.accountService = accountService;
+    }
+
 
     @Override
     public JwtResponse createJwtResponse(Account account) {
+        Key secretKey = secretKeyProvider.getSecretKey();
         Claims claims = Jwts.claims().setSubject(account.getEmail());
         claims.put("userName", account.getUserName());
         claims.put("fullName", account.getFullName());
@@ -61,7 +67,6 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
                 .signWith(secretKey)
                 .compact();
 
-        // Create refresh token
         Date refreshTokenExpiry = new Date(tokenCreateTime.getTime() + refreshTokenValidity);
         String refreshToken = Jwts.builder()
                 .setSubject(account.getEmail())
@@ -69,43 +74,21 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
                 .signWith(secretKey)
                 .compact();
 
-        // Create JwtResponse object and set secretKey
         JwtResponse jwtResponse = new JwtResponse();
         jwtResponse.setAccessToken(accessToken);
         jwtResponse.setRefreshToken(refreshToken);
         jwtResponse.setExpireRefreshToken(refreshTokenExpiry.getTime());
         jwtResponse.setExpires(tokenValidity.getTime());
         jwtResponse.setAccount(account);
-
         return jwtResponse;
     }
 
-
-    private Claims parseJwtClaims(String token) {
-        return jwtParser.parseClaimsJws(token).getBody();
-    }
-
     @Override
-    public Claims resolveClaims(HttpServletRequest req) {
+    public Claims resolveClaims(String token, Key secretKey) {
         try {
-            String token = resolveToken(req);
-
-            if (token != null) {
-                Claims claims = parseJwtClaims(token);
-                String computedSignature = Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getSignature();
-                if (claims != null && validateClaims(claims)) {
-                    return claims;
-                } else {
-                    throw new JwtException("Invalid JWT token or claims");
-                }
-            }
-            return null;
-        } catch (ExpiredJwtException ex) {
-            req.setAttribute("expired", ex.getMessage());
-            throw ex;
-        } catch (Exception ex) {
-            req.setAttribute("invalid", ex.getMessage());
-            throw ex;
+            return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new JwtException("Invalid JWT token or claims", e);
         }
     }
 
@@ -118,7 +101,7 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
     }
 
     @Override
-    public boolean validateClaims(Claims claims) throws AuthenticationException {
+    public boolean validateClaims(Claims claims, Key secretKey) throws AuthenticationException {
         try {
             boolean isValid = claims.getExpiration().after(new Date());
             if (!isValid) {
@@ -130,25 +113,23 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
         }
     }
 
-
     @Override
     public String decodePassword(String encodedPassword) {
         return new String(Base64.getDecoder().decode(encodedPassword));
     }
 
     @Override
-    public AccessToken findByToken(String token) {
+    public Optional<AccessToken> findByToken(String token) {
         return accessTokenRepository.findAccessTokenByToken(token);
     }
 
     @Override
     public void deleteByToken(String token) {
         try {
-            AccessToken accessTokenOptional = accessTokenRepository.findAccessTokenByToken(token);
-            if (accessTokenOptional != null) {
+            Optional<AccessToken> accessTokenOptional = accessTokenRepository.findAccessTokenByToken(token);
+            if (accessTokenOptional.isPresent()) {
                 accessTokenRepository.deleteAccessTokenByToken(token);
             } else {
-                System.out.println("No accessToken found for token: {}" + token);
                 throw new RuntimeException("No accessToken found for token: " + token);
             }
         } catch (Exception e) {
@@ -162,24 +143,31 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
         try {
             accessTokenRepository.save(accessToken);
         } catch (Exception e) {
-            System.out.println("Error saving accessToken: {}" + accessToken + e.getMessage());
             throw new RuntimeException("Error saving accessToken: " + accessToken, e);
         }
     }
 
-    //Chuyển Jwt token => claims => Account
+    public final Claims parseJwtClaims(String token) {
+        Key secretKey = secretKeyProvider.getSecretKey();
+        return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
+    }
+
     @Override
     public Account parseJwtTokenToAccount(String token) {
-        Claims accountClaims = parseJwtClaims(token);
-        Account account = new Account();
-        account.setEmail(accountClaims.getSubject());
-        account.setUserName((String) accountClaims.get("userName"));
-        account.setFullName((String) accountClaims.get("fullName"));
-        account.setRoleName((String) accountClaims.get("role"));
-        account.setPhoneNumber((String) accountClaims.get("phoneNumber"));
-        account.setGender((String) accountClaims.get("gender"));
-        account.setAvatarUrl((String) accountClaims.get("avatarUrl"));
-        account.setIsActive("Online".equals(accountClaims.get("isActive")));
-        return account;
+        String accessToken = token.substring(7);
+        Claims accountClaims = parseJwtClaims(accessToken);
+
+        Account accountFinding = accountService.findByEmail(accountClaims.getSubject());
+        if (accountFinding == null) {
+            Account accountGgleReturn = new Account();
+            String email = accountClaims.get("email", String.class);
+            String name = accountClaims.get("name", String.class);
+            accountGgleReturn.setUserName(name);
+            accountGgleReturn.setEmail(email);
+            return accountGgleReturn;
+        }
+        return accountFinding;
     }
 }
+
+
