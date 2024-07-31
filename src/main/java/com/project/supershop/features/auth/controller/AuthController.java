@@ -1,17 +1,23 @@
 package com.project.supershop.features.auth.controller;
 
-import com.project.supershop.features.account.domain.dto.request.LogoutRequest;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeRequestUrl;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.project.supershop.features.account.domain.dto.request.WaitingForEmailVerifyRequest;
 import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.features.account.services.AccountService;
 import com.project.supershop.features.auth.domain.dto.request.EmailVerificationRequest;
 import com.project.supershop.features.auth.domain.dto.response.EmailVerficationResponse;
+import com.project.supershop.features.auth.domain.dto.response.TokenDto;
+import com.project.supershop.features.auth.domain.dto.response.UrlDto;
 import com.project.supershop.features.auth.services.JwtTokenService;
 import com.project.supershop.features.auth.domain.dto.request.LoginRequest;
 import com.project.supershop.features.auth.domain.dto.request.RegisterRequest;
 import com.project.supershop.features.auth.domain.dto.response.JwtResponse;
 import com.project.supershop.common.ResultResponse;
 import org.joda.time.LocalDateTime;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,13 +26,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
+
+import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
 
 
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
-
     private final JwtTokenService jwtTokenService;
     private final AccountService accountService;
     private final AuthenticationManager authenticationManager;
@@ -38,7 +46,36 @@ public class AuthController {
         this.authenticationManager = authenticationManager;
         this.jwtTokenService = jwtTokenService;
         this.accountService = accountService;
+
     }
+
+    @PostMapping("find-account-by-token")
+    public ResponseEntity<ResultResponse<Account>> retrunAccountByToken(@RequestParam("token") String token) {
+        Account accountFinding = null;
+        try {
+            accountFinding = jwtTokenService.parseJwtTokenToAccount(token);
+            return ResponseEntity.ok(
+                    ResultResponse.<Account>builder()
+                            .timeStamp(LocalDateTime.now().toString())
+                            .body(accountFinding)
+                            .message("Found a account")
+                            .status(HttpStatus.UNAUTHORIZED)
+                            .statusCode(HttpStatus.UNAUTHORIZED.value())
+                            .build()
+            );
+        } catch (Exception e) {
+            return ResponseEntity.ok(
+                    ResultResponse.<Account>builder()
+                            .timeStamp(LocalDateTime.now().toString())
+                            .body(null)
+                            .message("Error finding account: " + e.getMessage())
+                            .status(HttpStatus.UNAUTHORIZED)
+                            .statusCode(HttpStatus.UNAUTHORIZED.value())
+                            .build()
+            );
+        }
+    }
+
 
     @PostMapping("/login")
     public ResponseEntity<ResultResponse<JwtResponse>> userLogin(@RequestBody LoginRequest loginRequest) {
@@ -175,7 +212,6 @@ public class AuthController {
 
         return modelAndView;
     }
-
 
 
 }

@@ -4,6 +4,7 @@ import com.project.supershop.features.account.domain.dto.request.WaitingForEmail
 import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.features.account.repositories.AccountRepositories;
 import com.project.supershop.features.account.services.AccountService;
+import com.project.supershop.features.account.utils.enums.Provider;
 import com.project.supershop.features.auth.domain.dto.request.RegisterRequest;
 import com.project.supershop.features.auth.domain.dto.response.EmailVerficationResponse;
 import com.project.supershop.features.auth.domain.dto.response.JwtResponse;
@@ -15,7 +16,7 @@ import com.project.supershop.features.email.domain.entities.Email;
 import com.project.supershop.features.email.repositories.ConfirmationRepository;
 import com.project.supershop.features.email.repositories.EmailRepository;
 import com.project.supershop.features.email.sevices.EmailService;
-import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -23,11 +24,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.Path;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,18 +41,27 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
     private final AccountRepositories accountRepositories;
     private final ConfirmationRepository confirmationRepository;
     private final EmailRepository emailRepository;
-    private final String FEMALE_DEFAULT_URL_AVATAR = "http://localhost:8080/api/v1/avatar/static/defaultAvatar/femaleAvatar/female.png";
-    private final String MALE_DEFAULT_URL_AVATAR = "http://localhost:8080/api/v1/avatar/static/defaultAvatar/maleAvatar/male.png";
+    private static final String FEMALE_DEFAULT_URL_AVATAR = "http://localhost:8080/api/v1/avatar/static/defaultAvatar/femaleAvatar/female.png";
+    private static final String MALE_DEFAULT_URL_AVATAR = "http://localhost:8080/api/v1/avatar/static/defaultAvatar/maleAvatar/male.png";
 
-    private final JwtTokenService jwtTokenService;
-    private final AccessTokenService accessTokenService;
+    private JwtTokenService jwtTokenService;
+    private AccessTokenService accessTokenService;
 
-    public AccountServiceImpl(AccountRepositories accountRepositories, ConfirmationRepository confirmationRepository, EmailService emailService, EmailRepository emailRepository, JwtTokenService jwtTokenService, AccessTokenService accessTokenService) {
+    @Autowired
+    public AccountServiceImpl(AccountRepositories accountRepositories, ConfirmationRepository confirmationRepository, EmailService emailService, EmailRepository emailRepository) {
         this.accountRepositories = accountRepositories;
         this.confirmationRepository = confirmationRepository;
         this.emailService = emailService;
         this.emailRepository = emailRepository;
+    }
+
+    @Autowired
+    public void setJwtTokenService(JwtTokenService jwtTokenService) {
         this.jwtTokenService = jwtTokenService;
+    }
+
+    @Autowired
+    public void setAccessTokenService(AccessTokenService accessTokenService) {
         this.accessTokenService = accessTokenService;
     }
 
@@ -65,52 +72,8 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
 
     @Override
     public Account findByEmail(String email) {
-        return accountRepositories.findAccountByEmail(email).orElseThrow(() ->
-                new UsernameNotFoundException("Account not found with email: " + email));
-    }
-
-    @Override
-    public Account findByPhoneNumber(String phoneNumber) {
-        return accountRepositories.findAccountByPhoneNumber(phoneNumber).orElseThrow(() ->
-                new UsernameNotFoundException("Account not found with user phone number: " + phoneNumber));
-    }
-
-    public EmailVerficationResponse verifyToken(String token) {
-        EmailVerficationResponse emailResponse = new EmailVerficationResponse();
-        Confirmation confirmation = confirmationRepository.findConfirmationByToken(token);
-
-        if (confirmation == null) {
-            emailResponse.setType("Not Found");
-            emailResponse.setMessage("Confirmation token not found.");
-            return emailResponse;
-        }
-
-        Email email = emailRepository.findEmailByConfirmations(confirmation);
-        if (email == null) {
-            emailResponse.setType("Not Found");
-            emailResponse.setMessage("Email not found for confirmation token.");
-            return emailResponse;
-        }
-
-        LocalDateTime expiredDay = confirmation.getExpiredDay();
-        LocalDateTime now = LocalDateTime.now();
-        emailResponse.setEmail(email.getEmailAddress());
-
-        if (expiredDay.isBefore(now)) {
-            emailResponse.setType("Expired");
-            emailResponse.setMessage("Verification link expired.");
-        } else if (confirmation.isVerify()) {
-            emailResponse.setType("Verified");
-            emailResponse.setMessage("Verification link was already verified.");
-        } else {
-            emailRepository.save(email);
-            confirmation.setVerify(true);
-            confirmationRepository.save(confirmation);
-            emailResponse.setType("Fine");
-            emailResponse.setMessage("Verification successful.");
-        }
-
-        return emailResponse;
+        return accountRepositories.findAccountByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Account not found with email: " + email));
     }
 
     @Override
@@ -136,30 +99,29 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
             emailRepository.save(email);
             emailService.sendHtmlEmail("New User", emailTo, emailConfirm.getToken());
             return emailConfirm.getToken();
-
         } else {
             throw new RuntimeException("Email already verified for another account");
         }
     }
+
     @Override
     public void logoutAccount(String email, String token) {
-        Optional<Account> optionalAccount = accountRepositories.findAccountByEmail(email);
-        if (!optionalAccount.isPresent()) {
-            throw new RuntimeException("Account not found for email: " + email);
-        }
+        Account account = accountRepositories.findAccountByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Account not found for email: " + email));
 
-        Account account = optionalAccount.get();
         account.setIsActive(false);
         account.setIsLoggedOut(true);
         accountRepositories.save(account);
 
-        AccessToken accessToken = accessTokenService.findByToken(token);
-        if (accessToken == null) {
+        Optional<AccessToken> accessToken = accessTokenService.findByToken(token);
+        if (accessToken.isEmpty()) {
             throw new RuntimeException("Invalid Bearer Token");
         }
 
-        accessTokenService.deleteByToken(token);
+        accessTokenService.deleteByToken(accessToken.get().getToken());
     }
+
+
 
     @Override
     public JwtResponse login(Object principal) {
@@ -172,12 +134,11 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         } else {
             throw new IllegalStateException("Unexpected principal type: " + principal.getClass());
         }
-//        if (!account.getIsLoggedOut()) {
-//            throw new RuntimeException("Account is already logged in.");
-//        }
+
         account.setIsActive(true);
         account.setIsLoggedOut(false);
         accountRepositories.save(account);
+
         JwtResponse jwtResponse = jwtTokenService.createJwtResponse(account);
         AccessToken accessToken = AccessToken.builder()
                 .token(jwtResponse.getAccessToken())
@@ -187,85 +148,73 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
                 .build();
 
         accessTokenService.saveToken(accessToken);
-
         return jwtResponse;
     }
 
     @Override
-    public boolean waitingForEmailResponse(WaitingForEmailVerifyRequest waitingForEmailVerifyRequest) {
-        Email emailFinding = emailRepository.findEmailByEmailAddress(waitingForEmailVerifyRequest.getEmail());
-        if (emailFinding == null) {
+    public boolean waitingForEmailResponse(WaitingForEmailVerifyRequest request) {
+        Email email = emailRepository.findEmailByEmailAddress(request.getEmail());
+        if (email == null) {
             return false;
         }
 
-        Confirmation emailConfirmation = confirmationRepository.findConfirmationByEmailAndToken(emailFinding, waitingForEmailVerifyRequest.getToken());
-        if (emailConfirmation == null) {
-            return false;
-        }
-
-        return emailConfirmation.isVerify();
+        Confirmation confirmation = confirmationRepository.findConfirmationByEmailAndToken(email, request.getToken());
+        return confirmation != null && confirmation.isVerify();
     }
 
-    public LocalDateTime parseStringToLocalDateTime(String dateString) {
-        // Định nghĩa định dạng của chuỗi ngày tháng
-        ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateString);
-        try {
-            // Chuyển đổi chuỗi thành LocalDateTime
-            return zonedDateTime.toLocalDateTime();
-        } catch (DateTimeParseException e) {
-            // Xử lý ngoại lệ nếu không thể parse thành công
-            throw new IllegalArgumentException("Invalid birth_day format", e);
-        }
-    }
     @Override
-    public Account saveAccount(RegisterRequest registerRequest) {
-        if (accountRepositories.existsByEmail(registerRequest.getEmail())) {
+    public Account createOrMergeGoogleAccountToLocalAccount(Account accountFromGoogle) {
+        Optional<Account> optionalAccount = accountRepositories.findAccountByEmail(accountFromGoogle.getEmail());
+        if (optionalAccount.isEmpty()) {
+            accountFromGoogle.setProvider(Provider.GOOGLE.getValue());
+            accountFromGoogle.setIsLoggedOut(true);
+            return accountRepositories.save(accountFromGoogle);
+        } else {
+            Account localAccount = optionalAccount.get();
+            localAccount.setUserName(accountFromGoogle.getUserName());
+            localAccount.setFullName(accountFromGoogle.getFullName());
+            localAccount.setAvatarUrl(accountFromGoogle.getAvatarUrl());
+            localAccount.setProvider(Provider.GOOGLE.getValue());
+            return accountRepositories.save(localAccount);
+        }
+    }
+
+
+    @Override
+    public Account saveAccount(RegisterRequest request) {
+        if (accountRepositories.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already in use");
         }
-        registerRequest.setEnable(false);
-        Account accountSaving = new Account();
-        accountSaving.setUserName(registerRequest.getUser_name());
-        accountSaving.setFullName(registerRequest.getFull_name());
-        accountSaving.setPassword(registerRequest.getPassword());
-        accountSaving.setPhoneNumber(registerRequest.getPhone_number());
-        accountSaving.setEmail(registerRequest.getEmail());
-        accountSaving.setIsEnable(false);
-        accountSaving.setGender(registerRequest.getGender());
-        if (registerRequest.getGender().equals("male")) {
-            accountSaving.setAvatarUrl(MALE_DEFAULT_URL_AVATAR);
-        } else {
-            accountSaving.setAvatarUrl(FEMALE_DEFAULT_URL_AVATAR);
-        }
-        // Chuyển đổi birth_day từ chuỗi sang LocalDateTime
-        try {
-            LocalDateTime birthDay = parseStringToLocalDateTime(registerRequest.getBirth_day());
-            accountSaving.setBirthDay(birthDay);
-        } catch (IllegalArgumentException e) {
-            System.out.print(e.getMessage());
-            throw new IllegalArgumentException("Invalid birth_day format.", e);
-        }
+        request.setEnable(false);
 
-        accountSaving.setRoleName("USER");
-        accountSaving.setIsActive(registerRequest.isActive());
-        accountSaving.setIsLoggedOut(true);
+        Account account = new Account();
+        account.setUserName(request.getUser_name());
+        account.setFullName(request.getFull_name());
+        account.setPassword(request.getPassword());
+        account.setPhoneNumber(request.getPhone_number());
+        account.setEmail(request.getEmail());
+        account.setProvider(Provider.LOCAL.getValue());
+        account.setIsEnable(false);
+        account.setGender(request.getGender());
+        account.setAvatarUrl(request.getGender().equals("male") ? MALE_DEFAULT_URL_AVATAR : FEMALE_DEFAULT_URL_AVATAR);
+        account.setBirthDay(parseStringToLocalDateTime(request.getBirth_day()));
+        account.setProvider(Provider.LOCAL.getValue());
+        account.setRoleName("USER");
+        account.setIsActive(request.isActive());
+        account.setIsLoggedOut(true);
 
-        // Lưu tài khoản vào cơ sở dữ liệu
-        accountRepositories.save(accountSaving);
-
-        return accountSaving;
+        return accountRepositories.save(account);
     }
+
     @Override
     public Account convertToAccount(UserDetails userDetails) {
-        return accountRepositories.findAccountByEmail(userDetails.getUsername()).orElseThrow(() ->
-                new UsernameNotFoundException("Account not found with email: " + userDetails.getUsername()));
+        return accountRepositories.findAccountByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new UsernameNotFoundException("Account not found with email: " + userDetails.getUsername()));
     }
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         Account account = findByEmail(email);
-        if (account == null) {
-            throw new UsernameNotFoundException("User not found with email: " + email);
-        }
 
         List<SimpleGrantedAuthority> authorities = Stream.of(account.getRoleName().split(","))
                 .map(SimpleGrantedAuthority::new)
@@ -276,5 +225,60 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
                 account.getPassword(),
                 authorities
         );
+    }
+
+    private LocalDateTime parseStringToLocalDateTime(String dateString) {
+        try {
+            ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateString);
+            return zonedDateTime.toLocalDateTime();
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Invalid birth_day format", e);
+        }
+    }
+
+    @Override
+    public EmailVerficationResponse verifyToken(String token) {
+        EmailVerficationResponse response = new EmailVerficationResponse();
+        Confirmation confirmation = confirmationRepository.findConfirmationByToken(token);
+
+        if (confirmation == null) {
+            response.setType("Not Found");
+            response.setMessage("Confirmation token not found.");
+            return response;
+        }
+
+        Email email = emailRepository.findEmailByConfirmations(confirmation);
+        if (email == null) {
+            response.setType("Not Found");
+            response.setMessage("Email not found for confirmation token.");
+            return response;
+        }
+
+        LocalDateTime expiredDay = confirmation.getCreatedAt().plusMinutes(15);
+        if (expiredDay.isBefore(LocalDateTime.now())) {
+            response.setType("Expired");
+            response.setMessage("Confirmation token has expired.");
+            return response;
+        }
+
+        if (!confirmation.isVerify()) {
+            Account account = new Account();
+            account.setEmail(email.getEmailAddress());
+            account.setIsEnable(true);
+            account.setIsActive(false);
+            account.setIsLoggedOut(true);
+            accountRepositories.save(account);
+
+            confirmation.setVerify(true);
+            confirmationRepository.save(confirmation);
+
+            response.setType("Valid");
+            response.setMessage("Email verification successful.");
+        } else {
+            response.setType("Valid");
+            response.setMessage("Email is already verified.");
+        }
+
+        return response;
     }
 }
