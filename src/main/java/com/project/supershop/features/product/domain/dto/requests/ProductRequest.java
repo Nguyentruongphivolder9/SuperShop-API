@@ -1,8 +1,5 @@
 package com.project.supershop.features.product.domain.dto.requests;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,8 +10,9 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 public class ProductRequest {
-    @NotBlank
+    private String id;
     private String name;
+    private String shopId;
     private Double price;
     private Integer stockQuantity;
     private String conditionProduct;

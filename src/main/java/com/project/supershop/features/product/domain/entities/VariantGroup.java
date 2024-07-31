@@ -19,20 +19,18 @@ import java.util.List;
 public class VariantGroup extends BaseEntity {
     private String name;
     private Boolean isPrimary;
-    private Boolean isActive;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "productId")
     private Product product;
 
-    @OneToMany(mappedBy = "variantGroup", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "variantGroup", fetch = FetchType.LAZY)
     private List<Variant> variants;
 
     public static VariantGroup createVariantGroup(VariantGroupRequest groupRequest, Product product){
         return VariantGroup.builder()
                 .name(groupRequest.getName())
                 .isPrimary(groupRequest.getIsPrimary())
-                .isActive(groupRequest.getIsActive())
                 .product(product)
                 .build();
     }
