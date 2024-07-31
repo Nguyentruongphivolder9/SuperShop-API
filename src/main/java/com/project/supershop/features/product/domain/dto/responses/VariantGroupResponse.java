@@ -15,6 +15,5 @@ public class VariantGroupResponse {
     private String id;
     private String name;
     private Boolean isPrimary;
-    private Boolean isActive;
     private List<VariantResponse> variants;
 }
