@@ -40,6 +40,20 @@ public class GlobalExceptionHandler {
                                 .build()
                 );
     }
+
+    @ExceptionHandler
+    public ResponseEntity<ExceptionResponse> handleForBiddenException(ForBiddenException ext){
+
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(
+                        ExceptionResponse.builder()
+                                .message("Error requiring access authentication.")
+                                .error(ext.getMessage())
+                                .statusCode(HttpStatus.FORBIDDEN.value())
+                                .build()
+                );
+    }
     @ExceptionHandler
     public ResponseEntity<ExceptionResponse> handleUnprocessableException(UnprocessableException ext){
 

@@ -16,13 +16,11 @@ import java.util.UUID;
 public interface ProductRepository extends JpaRepository<Product, UUID> {
 //    @EntityGraph(attributePaths = {"productImages", "variantsGroup", "productVariants"})
     @Query("SELECT DISTINCT p FROM Product p " +
-//            "LEFT JOIN FETCH p.category c " +
-//            "LEFT JOIN FETCH p.productImages pi " +
-//            "LEFT JOIN FETCH p.variantsGroup vg " +
-//            "LEFT JOIN FETCH vg.variants v " +
-//            "LEFT JOIN FETCH p.productVariants pv " +
-            "WHERE p.id = :id AND p.isActive = true")
-    Optional<Product> findByProductId(@Param("id") UUID id);
+            "WHERE p.shop.id = :shopId AND p.id = :id AND p.isActive = :isActive")
+    Optional<Product> findByProductIdAndIsActive(@Param("id") UUID id, @Param("shopId") UUID shopId, @Param("isActive") boolean isActive);
+    @Query("SELECT DISTINCT p FROM Product p " +
+            "WHERE p.shop.id = :shopId AND p.id = :id")
+    Optional<Product> findByProductIdOfShop(@Param("id") UUID id, @Param("shopId") UUID shopId);
 
     @Query(value = "SELECT DISTINCT p FROM Product p " +
             "LEFT JOIN FETCH p.category c ",
