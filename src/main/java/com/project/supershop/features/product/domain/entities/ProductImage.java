@@ -9,6 +9,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "productImages")
 @NoArgsConstructor
@@ -19,7 +21,7 @@ public class ProductImage extends BaseEntity {
     private String imageUrl;
     private Boolean isPrimary;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "productId")
     private Product product;
 

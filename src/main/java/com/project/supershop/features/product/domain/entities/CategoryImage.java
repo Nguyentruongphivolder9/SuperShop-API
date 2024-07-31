@@ -1,7 +1,6 @@
 package com.project.supershop.features.product.domain.entities;
 
 import com.project.supershop.common.BaseEntity;
-import com.project.supershop.features.product.domain.dto.requests.CategoryRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,7 +16,7 @@ import lombok.experimental.SuperBuilder;
 public class CategoryImage extends BaseEntity {
     private String imageUrl;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "categoryId")
     private Category category;
 

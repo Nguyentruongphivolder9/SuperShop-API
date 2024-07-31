@@ -10,7 +10,9 @@ import java.io.IOException;
 
 public interface ProductService {
 
-    ProductResponse createProduct(ProductRequest productRequest);
+    ProductResponse createProduct(ProductRequest productRequest, String jwtToken);
+    ProductResponse updateProduct(ProductRequest productRequest, String jwtToken);
     Page<ProductResponse> getListProduct(Pageable pageable);
-    ProductResponse getProductById(String id);
+    ProductResponse getProductByIdForUser(String id, String shopId);
+    ProductResponse getProductByIdOfShop(String id, String shopId);
 }

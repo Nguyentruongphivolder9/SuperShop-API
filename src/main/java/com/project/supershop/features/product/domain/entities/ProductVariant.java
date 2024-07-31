@@ -18,18 +18,18 @@ public class ProductVariant extends BaseEntity {
     private Double price;
     private Integer stockQuantity;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     private Product product;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "variant1Id")
     private Variant variant1;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "variant2Id")
     private Variant variant2;
 
-    public static ProductVariant createVariant(ProductVariantRequest productVariantRequest, Product product, Variant variant1, Variant variant2){
+    public static ProductVariant createProductVariant(ProductVariantRequest productVariantRequest, Product product, Variant variant1, Variant variant2){
         return ProductVariant.builder()
                 .price(productVariantRequest.getPrice())
                 .stockQuantity(productVariantRequest.getStockQuantity())
