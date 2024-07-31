@@ -54,6 +54,8 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
         claims.put("email", account.getEmail());
         claims.put("role", account.getRoleName());
         claims.put("phoneNumber", account.getPhoneNumber());
+        System.out.print("Phone number from Jwt Create BE : " + account.getPhoneNumber());
+
         claims.put("gender", account.getGender());
         claims.put("avatarUrl", account.getAvatarUrl());
         claims.put("isActive", account.getIsActive() ? "Online" : "Offline");

@@ -13,7 +13,7 @@ import java.util.List;
 
 public interface AccountService{
     List<Account> getAllAccounts();
-    Account saveAccount(RegisterRequest registerRequest);
+    Account saveAccount(Account account);
     Account convertToAccount(UserDetails userDetails);
     //Finding interfaces
     Account findByEmail(String email);
@@ -27,4 +27,5 @@ public interface AccountService{
     JwtResponse login(Object principal);
     boolean waitingForEmailResponse(WaitingForEmailVerifyRequest waitingForEmailVerifyRequest);
     Account createOrMergeGoogleAccountToLocalAccount(Account accountFromGoogle);
+    Account registerAccount(RegisterRequest registerRequest);
 }

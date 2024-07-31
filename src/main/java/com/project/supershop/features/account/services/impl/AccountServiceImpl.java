@@ -174,26 +174,30 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
             localAccount.setUserName(accountFromGoogle.getUserName());
             localAccount.setFullName(accountFromGoogle.getFullName());
             localAccount.setAvatarUrl(accountFromGoogle.getAvatarUrl());
+            localAccount.setRoleName("USER");
             localAccount.setProvider(Provider.GOOGLE.getValue());
             return accountRepositories.save(localAccount);
         }
     }
 
-
     @Override
-    public Account saveAccount(RegisterRequest request) {
-        if (accountRepositories.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already in use");
+    public Account registerAccount(RegisterRequest request) {
+        Email email = emailRepository.findEmailByEmailAddress(request.getEmail());
+        if(email.isVerified()){
+            throw new RuntimeException("Email is already been verified for another account");
+        }
+        Optional<Account> accountWithEmailAbove = accountRepositories.findAccountByEmail(email.getEmailAddress());
+        if(accountWithEmailAbove.isEmpty()){
+            throw new RuntimeException("No available registration account for the email");
         }
         request.setEnable(false);
-
-        Account account = new Account();
+        Account account = accountWithEmailAbove.get();
         account.setUserName(request.getUser_name());
         account.setFullName(request.getFull_name());
         account.setPassword(request.getPassword());
         account.setPhoneNumber(request.getPhone_number());
+        System.out.print("Phone number from register BE : " + request.getPhone_number());
         account.setEmail(request.getEmail());
-        account.setProvider(Provider.LOCAL.getValue());
         account.setIsEnable(false);
         account.setGender(request.getGender());
         account.setAvatarUrl(request.getGender().equals("male") ? MALE_DEFAULT_URL_AVATAR : FEMALE_DEFAULT_URL_AVATAR);
@@ -203,7 +207,15 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         account.setIsActive(request.isActive());
         account.setIsLoggedOut(true);
 
+        email.setVerified(true);
+        emailRepository.save(email);
         return accountRepositories.save(account);
+    }
+
+
+    @Override
+    public Account saveAccount(Account account) {
+     return null;
     }
 
     @Override

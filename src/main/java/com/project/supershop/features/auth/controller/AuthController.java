@@ -111,7 +111,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ResultResponse<JwtResponse>> accountRegister(@RequestBody RegisterRequest registerRequest) {
         try {
-            Account newAccount = accountService.saveAccount(registerRequest);
+            Account newAccount = accountService.registerAccount(registerRequest);
             JwtResponse jwtResponse = jwtTokenService.createJwtResponse(newAccount);
             return ResponseEntity.created(URI.create("")).body(
                     ResultResponse.<JwtResponse>builder()
@@ -197,12 +197,20 @@ public class AuthController {
         modelAndView.addObject("email", response.getEmail());
 
         switch (response.getType()) {
-            case "Fine":
+            case "Valid":
                 modelAndView.addObject("message", "Xác thực cho email " + response.getEmail() + " thành công");
                 modelAndView.setViewName("VerifySuccess");
                 break;
             case "Not Found":
+                modelAndView.addObject("error", response.getMessage());
+                modelAndView.addObject("message", "Token xác nhận không tìm thấy");
+                modelAndView.setViewName("VerifyError");
+                break;
             case "Expired":
+                modelAndView.addObject("error", response.getMessage());
+                modelAndView.addObject("message", "Phiên xác nhận quá hạng");
+                modelAndView.setViewName("VerifyError");
+                break;
             default:
                 modelAndView.addObject("error", response.getMessage());
                 modelAndView.addObject("message", "Xác thực email không thành công");
