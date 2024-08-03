@@ -33,13 +33,13 @@ import java.util.UUID;
 @Service
 @Transactional
 public class VoucherServiceImpl implements VoucherService {
-    private final AccountRepositories accountRepositories;
+    private final JwtTokenService jwtTokenService;
     private final AccessTokenService accessTokenService;
     private final ModelMapper modelMapper;
     private final VoucherRepository voucherRepository;
 
-    public VoucherServiceImpl(JwtTokenService jwtTokenService, AccountRepositories accountRepositories, AccessTokenService accessTokenService, ModelMapper modelMapper, VoucherRepository voucherRepository) {
-        this.accountRepositories = accountRepositories;
+    public VoucherServiceImpl(JwtTokenService jwtTokenService, AccountRepositories accountRepositories, JwtTokenService jwtTokenService1, AccessTokenService accessTokenService, ModelMapper modelMapper, VoucherRepository voucherRepository) {
+        this.jwtTokenService = jwtTokenService1;
         this.accessTokenService = accessTokenService;
         this.modelMapper = modelMapper;
         this.voucherRepository = voucherRepository;
@@ -48,7 +48,7 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     public VoucherResponse createVoucher(VoucherRequest voucherRequest, String jwtToken) {
         Voucher voucher = Voucher.createVoucher(voucherRequest);
-        Optional<Account> existingAccount = Optional.ofNullable(accessTokenService.parseJwtTokenToAccount(jwtToken));
+        Optional<Account> existingAccount = Optional.ofNullable(jwtTokenService.parseJwtTokenToAccount(jwtToken));
         existingAccount.map(account -> {
             if (!account.getRoleName().equalsIgnoreCase("admin")) {
                 voucher.setAccount(account);
@@ -85,7 +85,7 @@ public class VoucherServiceImpl implements VoucherService {
 
     @Override
     public Page<VoucherResponse> getVouchers(Pageable pageable, String jwtToken) {
-        Account existingAccount = accessTokenService.parseJwtTokenToAccount(jwtToken);
+        Account existingAccount = jwtTokenService.parseJwtTokenToAccount(jwtToken);
         Page<Voucher> vouchers = voucherRepository.findAllByShopId(pageable, existingAccount.getId()); // shopId
         return vouchers.map(voucher -> {
             modelMapper.typeMap(Voucher.class, VoucherResponse.class).addMappings(mapper -> {
