@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,13 +39,17 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryResponse createCategory(CategoryRequest categoryRequest) throws IOException {
-        Optional<Category> resultFindByName = categoryRepository.findByName(categoryRequest.getName());
+        Integer parentId = null;
+        if(!categoryRequest.getParentId().isEmpty()){
+            parentId = Integer.parseInt(categoryRequest.getParentId());
+        }
+        Optional<Category> resultFindByName = categoryRepository.findByNameAndParentId(parentId, categoryRequest.getName());
         if(resultFindByName.isPresent()){
             throw new ConflictException("Duplicate category name: " + categoryRequest.getName());
         }
 
         if (categoryRequest.getParentId() != null && !categoryRequest.getParentId().isEmpty()) {
-            Optional<Category> resultFindById = categoryRepository.findById(UUID.fromString(categoryRequest.getParentId()));
+            Optional<Category> resultFindById = categoryRepository.findById(parentId);
             if (resultFindById.isEmpty()) {
                 throw new NotFoundException(categoryRequest.getParentId() + " does not exist");
             }
@@ -61,7 +64,7 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         if (categoryRequest.getParentId() != null && !categoryRequest.getParentId().isEmpty()) {
-            Optional<Category> resultFindById = categoryRepository.findById(UUID.fromString(categoryRequest.getParentId()));
+            Optional<Category> resultFindById = categoryRepository.findById(parentId);
             if (resultFindById.isEmpty()) {
                 throw new NotFoundException(categoryRequest.getParentId() + " does not exist");
             } else {
@@ -97,7 +100,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<CategoryResponse> getAllCategories() {
-        List<Category> categoriesLevel1 = categoryRepository.findAllCategoriesWithImagesByParentIdAndIsChild("", true);
+        List<Category> categoriesLevel1 = categoryRepository.findAllCategoriesWithImagesByParentIdAndIsChild(true);
         return categoriesLevel1.stream()
                 .map(category -> mapCategoryToResponse(category))
                 .collect(Collectors.toList());
@@ -111,13 +114,12 @@ public class CategoryServiceImpl implements CategoryService {
             CategoryImage previewImage = CategoryImage.createCategoryImage(fileName, category);
             categoryImages.add(previewImage);
         }
-        List<CategoryImage> categoryImage = categoryImageRepository.saveAll(categoryImages);
-        return categoryImage;
+        return categoryImageRepository.saveAll(categoryImages);
     }
 
     private CategoryResponse mapCategoryToResponse(Category category) {
         CategoryResponse response = modelMapper.map(category, CategoryResponse.class);
-        List<Category> childCategories = categoryRepository.findAllCategoriesWithImagesByParentId(category.getId().toString());
+        List<Category> childCategories = categoryRepository.findAllCategoriesWithImagesByParentId(category.getId());
 
         if (!childCategories.isEmpty()) {
             List<CategoryResponse> childResponses = childCategories.stream()
@@ -130,17 +132,24 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryResponse getCategoryById(String id) {
+    public CategoryResponse getCategoryById(Integer id) {
         return null;
     }
 
     @Override
-    public void deleteCategoryById(String id) {
-        Optional<Category> category = categoryRepository.findById(UUID.fromString(id));
+    public void deleteCategoryById(Integer id) {
+        Optional<Category> category = categoryRepository.findById(id);
         if (category.isEmpty()) {
             throw new NotFoundException(id + " does not exist");
         }
+
+        List<CategoryImage> categoryImages = categoryImageRepository.findAllCategoryImagesByCategoryId(id);
+        if(!categoryImages.isEmpty()){
+            categoryImageRepository.deleteAllInBatch(categoryImages);
+        }
+
         // code kiểm tra category tồn tại product chưa
         categoryRepository.delete(category.get());
+
     }
 }

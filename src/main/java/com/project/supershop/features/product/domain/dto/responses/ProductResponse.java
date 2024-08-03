@@ -13,6 +13,8 @@ import java.util.List;
 @Builder
 public class ProductResponse {
     private String id;
+    private String shopId;
+    private String categoryId;
     private String name;
     private Double price;
     private Integer stockQuantity;
@@ -22,7 +24,6 @@ public class ProductResponse {
     private Double ratingStart;
     private Boolean isVariant;
     private Boolean isActive;
-    private CategoryResponse category;
     private List<ProductImagesResponse> productImages;
     private List<VariantGroupResponse> variantsGroup;
     private List<ProductVariantResponse> productVariants;

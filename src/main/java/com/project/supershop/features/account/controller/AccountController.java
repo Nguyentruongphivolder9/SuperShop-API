@@ -1,13 +1,17 @@
 package com.project.supershop.features.account.controller;
 
+import com.project.supershop.features.account.domain.dto.request.AccountRequest;
 import com.project.supershop.features.account.domain.dto.request.LogoutRequest;
 import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.features.account.services.AccountService;
 import com.project.supershop.common.ResultResponse;
+import com.project.supershop.features.auth.domain.dto.request.RegisterRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +21,7 @@ import java.util.Map;
 public class AccountController {
 
     private final AccountService accountService;
+
 
     public AccountController(AccountService accountService) {
         this.accountService = accountService;
@@ -45,7 +50,6 @@ public class AccountController {
         }
 
         String token = authorizationHeader.substring(7);
-        System.out.print(token);
         try {
             accountService.logoutAccount(logoutRequest.getEmail(), token);
             return ResponseEntity.ok(

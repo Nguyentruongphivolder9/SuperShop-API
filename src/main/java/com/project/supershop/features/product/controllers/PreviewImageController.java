@@ -1,11 +1,8 @@
 package com.project.supershop.features.product.controllers;
 
 import com.project.supershop.common.ResultResponse;
-import com.project.supershop.features.product.domain.dto.requests.ProductRequest;
 import com.project.supershop.features.product.domain.dto.responses.PreviewImageResponse;
-import com.project.supershop.features.product.domain.dto.responses.ProductResponse;
 import com.project.supershop.features.product.services.PreviewImageService;
-import com.project.supershop.features.product.services.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -43,7 +40,8 @@ public class PreviewImageController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ResultResponse> deleteAuthor(@RequestParam("id") String id) {
+    public ResponseEntity<ResultResponse> deleteAuthor(@PathVariable("id") String id) {
+        System.out.println("Id image: " + id);
         previewImageService.deletePreviewImage(id);
         return ResponseEntity.status(HttpStatus.OK).body(
                 ResultResponse.builder()

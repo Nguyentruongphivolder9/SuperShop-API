@@ -1,7 +1,6 @@
 package com.project.supershop.features.product.domain.entities;
 
 import com.project.supershop.common.BaseEntity;
-import com.project.supershop.features.product.domain.dto.requests.VariantRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -19,7 +18,7 @@ public class Variant extends BaseEntity {
     private String imageUrl;
     private Boolean isActive;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne
     @JoinColumn(name = "variantGroupId")
     private VariantGroup variantGroup;
 

@@ -1,7 +1,9 @@
 package com.project.supershop.features.auth.domain.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.project.supershop.common.BaseEntity;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -14,39 +16,43 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisterRequest extends BaseEntity {
-    @Pattern(regexp = "ADMIN|USER|SELLER")
-    private String roleName;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class RegisterRequest{
 
-    @NotBlank(message = "Name can't be blank")
-    @NotNull(message = "Name can't be left empty")
-    private String userName;
+    @Pattern(regexp = "ADMIN|USER|SELLER", message = "Invalid role name")
+    private String role_name;
+
+    @NotBlank(message = "User name can't be blank")
+    @NotNull(message = "User name can't be left empty")
+    private String user_name;
 
     @NotBlank(message = "Password can't be blank")
     @NotNull(message = "Password can't be left empty")
     private String password;
 
-    @NotNull(message = "User avatarURL can't be left empty")
-    private String avatarUrl;
-
     @NotBlank(message = "User full name can't be blank")
     @NotNull(message = "User full name can't be left empty")
-    private String fullName;
+    private String full_name;
 
     @NotBlank(message = "Email can't be blank")
     @NotNull(message = "Email can't be left empty")
+    @Email(message = "Invalid email format")
     private String email;
 
     @NotBlank(message = "Phone number can't be blank")
     @NotNull(message = "Phone number can't be left empty")
-    private String phoneNumber;
+    private String phone_number;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime birthDay;
+    @NotNull(message = "Birthday can't be left empty")
+    private String birth_day;
 
     @NotNull(message = "User gender can't be left empty")
     private String gender;
 
-    private boolean isActive = true;
+    private boolean isActive = false;
     private boolean isEnable;
+
+    private String address;
+
+    private String avatar;
 }

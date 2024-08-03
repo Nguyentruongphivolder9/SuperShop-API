@@ -5,6 +5,7 @@ import com.project.supershop.features.product.domain.dto.responses.ProductRespon
 import com.project.supershop.features.product.domain.entities.PreviewImage;
 import com.project.supershop.features.product.repositories.PreviewImageRepository;
 import com.project.supershop.features.product.services.PreviewImageService;
+import com.project.supershop.handler.NotFoundException;
 import com.project.supershop.services.FileUploadUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -52,7 +53,10 @@ public class PreviewImageServiceImpl implements PreviewImageService {
     @Override
     public void deletePreviewImage(String id) {
         Optional<PreviewImage> previewImage = previewImageRepository.findById(UUID.fromString(id));
-        fileUploadUtils.deleteFile("products", previewImage.get().getPreImageUrl());
+        if(previewImage.isEmpty()){
+            throw new NotFoundException("Image does not exist");
+        }
+        fileUploadUtils.deleteFile("products", previewImage.get().getImageUrl());
         previewImageRepository.deleteById(UUID.fromString(id));
     }
 }

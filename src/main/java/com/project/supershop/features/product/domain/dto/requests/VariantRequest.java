@@ -11,6 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class VariantRequest {
     private String id;
     private String name;
-    private String imageUrl;
+    private ProductImagesRequest variantImage;
     private Boolean isActive;
 }

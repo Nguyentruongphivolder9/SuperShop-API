@@ -13,6 +13,5 @@ public class VariantGroupRequest {
     private String id;
     private String name;
     private Boolean isPrimary;
-    private Boolean isActive;
     private List<VariantRequest> variants;
 }
