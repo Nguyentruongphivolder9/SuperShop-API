@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Data
 public class VoucherRequest {
+    private String id;
     private String name;
     private String code;
     private String voucherType;
@@ -21,6 +22,7 @@ public class VoucherRequest {
     private Boolean isLimit;
     private Integer quantity;
     private Integer maxDistribution;
+    private Boolean isEnd;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
 }

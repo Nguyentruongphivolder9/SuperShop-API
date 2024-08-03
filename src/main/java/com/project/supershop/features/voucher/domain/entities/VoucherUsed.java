@@ -15,11 +15,15 @@ import lombok.experimental.SuperBuilder;
 @Data
 @SuperBuilder
 public class VoucherUsed extends BaseEntity {
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "voucherId")
     private Voucher voucher;
 
-    @ManyToOne(cascade = CascadeType.ALL, optional = true)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "accountId")
     private Account account;
+
+//    @ManyToOne(fetch = FetchType.LAZY)
+//    @JoinColumn(name = "orderId")
+//    private Order order;
 }

@@ -43,7 +43,7 @@ public class Voucher extends BaseEntity {
     @OneToMany(mappedBy = "voucher", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<VoucherUsed> vouchersUsed;
 
-    @ManyToOne(cascade = CascadeType.ALL, optional = true)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shopId")
     private Account account;
 
