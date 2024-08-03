@@ -303,9 +303,9 @@ public class ProductServiceImpl implements ProductService {
             throw new NotFoundException(productRequest.getCategoryId() + " does not exist");
         }
 
-        Optional<Product> productOptional = productRepository.findByProductIdOfShop(UUID.fromString(productRequest.getId()), UUID.fromString(productRequest.getShopId()));
+        Optional<Product> productOptional = productRepository.findByProductIdOfProductOfShop(UUID.fromString(productRequest.getId()), UUID.fromString(productRequest.getShopId()));
         if(productOptional.isEmpty()){
-            throw new NotFoundException("Product dose not exists.");
+            throw new NotFoundException("Product does not exists.");
         }
 
         productOptional.get().setShop(parseJwtToAccount);
@@ -676,14 +676,23 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductResponse getProductByIdForUser(String id, String shopId) {
-        Optional<Product> productResponse = productRepository.findByProductIdAndIsActive(UUID.fromString(id), UUID.fromString(shopId), true);
+        Optional<Product> productResponse = productRepository.findByProductIdAndIsActiveOfProductOfShop(UUID.fromString(id), UUID.fromString(shopId), true);
         return productResponse.map(this::mapProductToProductResponse)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
     }
 
     @Override
+    public ProductResponse getProductById(String id) {
+        Optional<Product> productResponse = productRepository.findByProductIdOfProduct(UUID.fromString(id));
+        if (productResponse.isEmpty()) {
+           return null;
+        }
+        return productResponse.map(this::mapProductToProductResponse).get();
+    }
+
+    @Override
     public ProductResponse getProductByIdOfShop(String id, String shopId) {
-        Optional<Product> productResponse = productRepository.findByProductIdOfShop(UUID.fromString(id), UUID.fromString(shopId));
+        Optional<Product> productResponse = productRepository.findByProductIdOfProductOfShop(UUID.fromString(id), UUID.fromString(shopId));
         return productResponse.map(this::mapProductToProductResponse)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
     }
