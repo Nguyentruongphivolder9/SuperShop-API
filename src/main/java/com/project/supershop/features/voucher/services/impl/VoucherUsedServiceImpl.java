@@ -2,6 +2,7 @@ package com.project.supershop.features.voucher.services.impl;
 
 import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.features.auth.services.AccessTokenService;
+import com.project.supershop.features.auth.services.JwtTokenService;
 import com.project.supershop.features.voucher.domain.dto.responses.DepotVoucherResponse;
 import com.project.supershop.features.voucher.domain.dto.responses.VoucherUsedResponse;
 import com.project.supershop.features.voucher.domain.entities.DepotVoucher;
@@ -19,18 +20,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class VoucherUsedServiceImpl implements VoucherUsedService {
 
-    private final AccessTokenService accessTokenService;
+    private final JwtTokenService jwtTokenService;
     private final ModelMapper modelMapper;
     private final VoucherUsedRepository voucherUsedRepository;
-    public VoucherUsedServiceImpl(AccessTokenService accessTokenService, ModelMapper modelMapper, VoucherUsedRepository voucherUsedRepository) {
-        this.accessTokenService = accessTokenService;
+    public VoucherUsedServiceImpl(AccessTokenService accessTokenService, JwtTokenService jwtTokenService, ModelMapper modelMapper, VoucherUsedRepository voucherUsedRepository) {
+        this.jwtTokenService = jwtTokenService;
         this.modelMapper = modelMapper;
         this.voucherUsedRepository = voucherUsedRepository;
     }
 
     @Override
     public Page<VoucherUsedResponse> getVouchersUsed(Pageable pageable, String jwtToken) {
-        Account existingAccount = accessTokenService.parseJwtTokenToAccount(jwtToken);
+        Account existingAccount = jwtTokenService.parseJwtTokenToAccount(jwtToken);
         Page<VoucherUsed> listVoucherUsed = voucherUsedRepository.findAllByAccountId(pageable, existingAccount.getId());
         return listVoucherUsed.map(voucherUsed -> {
             modelMapper.typeMap(VoucherUsed.class, VoucherUsedResponse.class).addMappings(mapper -> {

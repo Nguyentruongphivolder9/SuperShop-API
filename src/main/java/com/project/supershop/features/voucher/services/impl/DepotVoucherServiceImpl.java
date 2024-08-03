@@ -2,6 +2,7 @@ package com.project.supershop.features.voucher.services.impl;
 
 import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.features.auth.services.AccessTokenService;
+import com.project.supershop.features.auth.services.JwtTokenService;
 import com.project.supershop.features.voucher.domain.dto.requests.DepotVoucherRequest;
 import com.project.supershop.features.voucher.domain.dto.responses.DepotVoucherResponse;
 import com.project.supershop.features.voucher.domain.entities.DepotVoucher;
@@ -23,12 +24,12 @@ import java.util.Optional;
 @Service
 @Transactional
 public class DepotVoucherServiceImpl implements DepotVoucherService {
-    private final AccessTokenService accessTokenService;
+    private final JwtTokenService jwtTokenService;
     private final ModelMapper modelMapper;
     private final DepotVoucherRepository depotVoucherRepository;
     private final VoucherRepository voucherRepository;
-    public DepotVoucherServiceImpl(AccessTokenService accessTokenService, ModelMapper modelMapper, DepotVoucherRepository depotVoucherRepository,  VoucherRepository voucherRepository) {
-        this.accessTokenService = accessTokenService;
+    public DepotVoucherServiceImpl(AccessTokenService accessTokenService, JwtTokenService jwtTokenService, ModelMapper modelMapper, DepotVoucherRepository depotVoucherRepository, VoucherRepository voucherRepository) {
+        this.jwtTokenService = jwtTokenService;
         this.modelMapper = modelMapper;
         this.depotVoucherRepository = depotVoucherRepository;
         this.voucherRepository = voucherRepository;
@@ -36,7 +37,7 @@ public class DepotVoucherServiceImpl implements DepotVoucherService {
 
     @Override
     public DepotVoucherResponse addVoucherToDepot(DepotVoucherRequest depotVoucherRequest, String jwtToken) {
-        Account existingAccount = accessTokenService.parseJwtTokenToAccount(jwtToken);
+        Account existingAccount = jwtTokenService.parseJwtTokenToAccount(jwtToken);
         Optional<Voucher> existingVoucher = voucherRepository.findByCode(depotVoucherRequest.getCode());
         Voucher voucher = existingVoucher
                 .map(v -> {
@@ -69,7 +70,7 @@ public class DepotVoucherServiceImpl implements DepotVoucherService {
 
     @Override
     public Page<DepotVoucherResponse> getVouchersOnSpecificUser(Pageable pageable, String jwtToken) {
-        Account existingAccount = accessTokenService.parseJwtTokenToAccount(jwtToken);
+        Account existingAccount = jwtTokenService.parseJwtTokenToAccount(jwtToken);
         Page<DepotVoucher> listVoucherInDepot = depotVoucherRepository.findAllByAccountId(pageable, existingAccount.getId());
         return listVoucherInDepot.map(voucherDepot -> {
             modelMapper.typeMap(DepotVoucher.class, DepotVoucherResponse.class).addMappings(mapper -> {
