@@ -15,4 +15,5 @@ public interface ProductService {
     Page<ProductResponse> getListProduct(Pageable pageable);
     ProductResponse getProductByIdForUser(String id, String shopId);
     ProductResponse getProductByIdOfShop(String id, String shopId);
+    ProductResponse getProductById(String id);
 }

@@ -17,18 +17,15 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 //    @EntityGraph(attributePaths = {"productImages", "variantsGroup", "productVariants"})
     @Query("SELECT DISTINCT p FROM Product p " +
             "WHERE p.shop.id = :shopId AND p.id = :id AND p.isActive = :isActive")
-    Optional<Product> findByProductIdAndIsActive(@Param("id") UUID id, @Param("shopId") UUID shopId, @Param("isActive") boolean isActive);
+    Optional<Product> findByProductIdAndIsActiveOfProductOfShop(@Param("id") UUID id, @Param("shopId") UUID shopId, @Param("isActive") boolean isActive);
+    @Query("SELECT DISTINCT p FROM Product p " +
+            "WHERE p.id = :id AND p.isActive = true")
+    Optional<Product> findByProductIdOfProduct(@Param("id") UUID id);
     @Query("SELECT DISTINCT p FROM Product p " +
             "WHERE p.shop.id = :shopId AND p.id = :id")
-    Optional<Product> findByProductIdOfShop(@Param("id") UUID id, @Param("shopId") UUID shopId);
+    Optional<Product> findByProductIdOfProductOfShop(@Param("id") UUID id, @Param("shopId") UUID shopId);
 
-    @Query(value = "SELECT DISTINCT p FROM Product p " +
-            "LEFT JOIN FETCH p.category c ",
-//            "LEFT JOIN FETCH p.variantsGroup vg " +
-//            "LEFT JOIN FETCH vg.variants v " +
-//            "LEFT JOIN FETCH p.productImages pi " +
-//            "LEFT JOIN FETCH p.productVariants pv ",
-//            "LEFT JOIN FETCH pv.variants pvv",
+    @Query(value = "SELECT DISTINCT p FROM Product p",
             countQuery = "SELECT COUNT(p) FROM Product p")
     Page<Product> findAll(Pageable pageable);
 }
