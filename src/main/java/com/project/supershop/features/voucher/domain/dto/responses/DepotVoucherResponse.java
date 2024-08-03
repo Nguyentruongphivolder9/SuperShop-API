@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 public class DepotVoucherResponse {
     private String code;
     private Integer quantity;
-    private VoucherResponse voucherResponse;
+    private VoucherResponse voucher;
 }

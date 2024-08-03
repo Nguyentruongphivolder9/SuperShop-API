@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 public class VoucherUsedResponse {
-    private VoucherResponse voucherResponse;
+    private VoucherResponse voucher;
 }

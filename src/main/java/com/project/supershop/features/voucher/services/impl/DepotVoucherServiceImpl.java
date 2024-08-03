@@ -17,6 +17,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -37,9 +38,15 @@ public class DepotVoucherServiceImpl implements DepotVoucherService {
     public DepotVoucherResponse addVoucherToDepot(DepotVoucherRequest depotVoucherRequest, String jwtToken) {
         Account existingAccount = accessTokenService.parseJwtTokenToAccount(jwtToken);
         Optional<Voucher> existingVoucher = voucherRepository.findByCode(depotVoucherRequest.getCode());
-        Voucher voucher = existingVoucher.orElseThrow(() ->
-                new NotFoundException("This voucher is no longer in use. It may have been removed")
-        );
+        Voucher voucher = existingVoucher
+                .map(v -> {
+                    LocalDateTime now = LocalDateTime.now();
+                    if (v.getEndDate().isBefore(now)) {
+                        throw new NotFoundException("This voucher has expired. It is no longer valid.");
+                    }
+                    return v;
+                })
+                .orElseThrow(() -> new NotFoundException("This voucher is no longer in use. It may have been removed."));
 
         DepotVoucher voucherInDepot = depotVoucherRepository.findByVoucherIdAndAccountId(voucher.getId(),existingAccount.getId()).
             map(vid -> {
@@ -53,7 +60,7 @@ public class DepotVoucherServiceImpl implements DepotVoucherService {
 
         TypeMap<DepotVoucher, DepotVoucherResponse> depotVoucherResponseTypeMap = modelMapper.typeMap(DepotVoucher.class, DepotVoucherResponse.class)
                 .addMappings(mapper -> {
-                    mapper.<String>map(src -> src.getVoucher().getAccount().getId(), (dest,v) -> dest.getVoucherResponse().setShopId(v));
+                    mapper.<String>map(src -> src.getVoucher().getAccount().getId(), (dest,v) -> dest.getVoucher().setShopId(v));
                     mapper.map(src -> src.getVoucher().getCode(), DepotVoucherResponse::setCode);
                     mapper.map(DepotVoucher::getQuantity, DepotVoucherResponse::setQuantity);
                 });
@@ -66,7 +73,8 @@ public class DepotVoucherServiceImpl implements DepotVoucherService {
         Page<DepotVoucher> listVoucherInDepot = depotVoucherRepository.findAllByAccountId(pageable, existingAccount.getId());
         return listVoucherInDepot.map(voucherDepot -> {
             modelMapper.typeMap(DepotVoucher.class, DepotVoucherResponse.class).addMappings(mapper -> {
-                mapper.<String>map(src -> src.getVoucher().getAccount().getId(), (dest,v) -> dest.getVoucherResponse().setShopId(v)); // map ShopId for information
+                mapper.<String>map(src -> src.getVoucher().getAccount().getId(), (dest, v) -> dest.getVoucher().setShopId(v)); //map ShopId for information
+                mapper.map(DepotVoucher::getVoucher, DepotVoucherResponse::setVoucher); //
                 mapper.map(src -> src.getVoucher().getCode(), DepotVoucherResponse::setCode);
                 mapper.map(DepotVoucher::getQuantity, DepotVoucherResponse::setQuantity);
             });

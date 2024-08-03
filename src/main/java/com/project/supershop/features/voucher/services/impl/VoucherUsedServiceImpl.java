@@ -34,7 +34,8 @@ public class VoucherUsedServiceImpl implements VoucherUsedService {
         Page<VoucherUsed> listVoucherUsed = voucherUsedRepository.findAllByAccountId(pageable, existingAccount.getId());
         return listVoucherUsed.map(voucherUsed -> {
             modelMapper.typeMap(VoucherUsed.class, VoucherUsedResponse.class).addMappings(mapper -> {
-                mapper.<String>map(src -> src.getVoucher().getAccount().getId(), (dest,v) -> dest.getVoucherResponse().setShopId(v)); // map ShopId for information
+                mapper.<String>map(src -> src.getVoucher().getAccount().getId(), (dest,v) -> dest.getVoucher().setShopId(v));
+                mapper.map(VoucherUsed::getVoucher, VoucherUsedResponse::setVoucher);; // map ShopId for information
             });
             return modelMapper.map(voucherUsed, VoucherUsedResponse.class);
         });
