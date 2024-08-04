@@ -10,8 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 public class CartItemResponse {
+    private String id;
     private Integer quantity;
-    private String shopId;
-    private ProductVariantResponse productVariant;
+    private String productVariantId;
     private ProductResponse product;
+    private String createdAt;
+    private String updatedAt;
 }

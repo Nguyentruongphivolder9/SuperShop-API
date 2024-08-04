@@ -16,8 +16,10 @@ import java.util.UUID;
 @Repository
 public interface CartItemRepository extends JpaRepository<CartItem, UUID> {
     @Query("SELECT DISTINCT ci FROM CartItem ci " +
-            "WHERE ci.account.id = :accountId AND ci.product.id = :productId")
-    Optional<CartItem> findCartItemByAccountIdAndProductId(@Param("accountId") UUID accountId, @Param("productId") UUID productId);
+            "WHERE ci.account.id = :accountId AND "+
+            "ci.product.id = :productId AND " +
+            "ci.productVariantId = :productVariantId")
+    Optional<CartItem> findCartItemByAccountIdAndProductId(@Param("accountId") UUID accountId, @Param("productId") UUID productId, @Param("productVariantId") String productVariantId);
 
     @Query(value = "SELECT DISTINCT ci FROM CartItem ci WHERE ci.account.id = :accountId",
             countQuery = "SELECT COUNT(ci) FROM CartItem ci WHERE ci.account.id = :accountId")
