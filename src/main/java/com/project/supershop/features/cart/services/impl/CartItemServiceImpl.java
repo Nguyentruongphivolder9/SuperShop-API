@@ -51,7 +51,7 @@ public class CartItemServiceImpl implements CartItemService {
             throw new NotFoundException("Product does not exists or store owners who have not yet posted for sale.");
         }
 
-        int quantityLimit =  Optional.ofNullable(productOptional.get().getStockQuantity()).orElse(0);
+        int quantityLimit =  Optional.ofNullable(productOptional.get().getStockQuantity()).orElseGet(() -> 0);
         if (cartItemRequest.getProductVariantId() != null && !cartItemRequest.getProductVariantId().isEmpty()) {
             Optional<ProductVariant> productVariantOptional = productVariantRepository.findProductVariantByIdAndProductId(UUID.fromString(cartItemRequest.getProductVariantId()), productOptional.get().getId());
             if (productVariantOptional.isEmpty()) {
@@ -60,12 +60,12 @@ public class CartItemServiceImpl implements CartItemService {
             quantityLimit = productVariantOptional.get().getStockQuantity();
         }
 
-        Optional<CartItem> cartItemOptional = cartItemRepository.findCartItemByAccountIdAndProductId(UUID.fromString(cartItemRequest.getProductId()), parseJwtToAccount.getId());
+        Optional<CartItem> cartItemOptional = cartItemRepository.findCartItemByAccountIdAndProductId(parseJwtToAccount.getId(), UUID.fromString(cartItemRequest.getProductId()), cartItemRequest.getProductVariantId());
         CartItem cartItemResult;
         CartItem cartItem;
         int quantity;
 
-        if (cartItemOptional.isEmpty()) {
+        if (cartItemOptional.isEmpty() || !cartItemOptional.get().getProductVariantId().equals(cartItemRequest.getProductVariantId())) {
             quantity = cartItemRequest.getQuantity();
             if (quantity > quantityLimit) {
                 cartItemRequest.setQuantity(quantityLimit);
@@ -95,9 +95,9 @@ public class CartItemServiceImpl implements CartItemService {
             throw new NotFoundException("Empty cart data list.");
         }
 
-        modelMapper.typeMap(CartItem.class, CartItemResponse.class).addMappings(mapper -> {
-            mapper.map(src -> src.getAccount().getId(), CartItemResponse::setShopId);
-            mapper.map(src -> mapProductToProductResponse(src.getProduct()), CartItemResponse::setProduct);
+        modelMapper.typeMap(Product.class, ProductResponse.class).addMappings(mapper -> {
+            mapper.map(src -> src.getShop().getId(), ProductResponse::setShopId);
+            mapper.map(src -> src.getCategory().getId(), ProductResponse::setCategoryId);
         });
 
         return cartItems.map(cartItem -> modelMapper.map(cartItem, CartItemResponse.class));
