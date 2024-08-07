@@ -1,16 +1,14 @@
 package com.project.supershop.features.auth.controller;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeRequestUrl;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
+import com.project.supershop.features.account.domain.dto.request.LogoutRequest;
 import com.project.supershop.features.account.domain.dto.request.WaitingForEmailVerifyRequest;
 import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.features.account.services.AccountService;
 import com.project.supershop.features.auth.domain.dto.request.EmailVerificationRequest;
+import com.project.supershop.features.auth.domain.dto.request.RefreshTokenRequest;
 import com.project.supershop.features.auth.domain.dto.response.EmailVerficationResponse;
-import com.project.supershop.features.auth.domain.dto.response.TokenDto;
-import com.project.supershop.features.auth.domain.dto.response.UrlDto;
+import com.project.supershop.features.auth.domain.entities.AccessToken;
+import com.project.supershop.features.auth.services.AccessTokenService;
 import com.project.supershop.features.auth.services.JwtTokenService;
 import com.project.supershop.features.auth.domain.dto.request.LoginRequest;
 import com.project.supershop.features.auth.domain.dto.request.RegisterRequest;
@@ -27,7 +25,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 
@@ -38,14 +35,17 @@ public class AuthController {
     private final JwtTokenService jwtTokenService;
     private final AccountService accountService;
     private final AuthenticationManager authenticationManager;
+    private AccessTokenService accessTokenService;
     public AuthController(
             AuthenticationManager authenticationManager,
             JwtTokenService jwtTokenService,
-            AccountService accountService
+            AccountService accountService,
+            AccessTokenService accessTokenService
     ) {
         this.authenticationManager = authenticationManager;
         this.jwtTokenService = jwtTokenService;
         this.accountService = accountService;
+        this.accessTokenService = accessTokenService;
 
     }
 
@@ -76,16 +76,84 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/google-login-without-password")
+    public ResponseEntity<ResultResponse<JwtResponse>> googleLogin(@RequestBody LogoutRequest logoutRequest){
+        JwtResponse jwtResponse = null;
+        Account accountGgleLogin = accountService.findByEmail(logoutRequest.getEmail());
+        jwtResponse = jwtTokenService.createJwtResponse(accountGgleLogin);
+
+        AccessToken accessToken = AccessToken.builder()
+                .token(jwtResponse.getAccessToken())
+                .refreshToken(jwtResponse.getRefreshToken())
+                .issuedAt(System.currentTimeMillis())
+                .expiresAt(jwtResponse.getExpires())
+                .build();
+        accessTokenService.saveToken(accessToken);
+        return ResponseEntity.ok(
+                ResultResponse.<JwtResponse>builder()
+                        .timeStamp(LocalDateTime.now().toString())
+                        .body(jwtResponse)
+                        .message("Authentication successfully")
+                        .status(HttpStatus.OK)
+                        .statusCode(HttpStatus.OK.value())
+                        .build()
+        );
+    }
+
+    @PostMapping("/refresh-access-token")
+    public ResponseEntity<ResultResponse<?>> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest){
+        JwtResponse jwtResponse = null;
+        try{
+            jwtResponse = accountService.refreshToken(refreshTokenRequest.getRefreshToken());
+
+            return ResponseEntity.ok(
+                    ResultResponse.<JwtResponse>builder()
+                            .timeStamp(LocalDateTime.now().toString())
+                            .body(jwtResponse)
+                            .message("Authentication successfully")
+                            .status(HttpStatus.OK)
+                            .statusCode(HttpStatus.OK.value())
+                            .build()
+            );
+
+        }catch(Exception e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                    ResultResponse.<Void>builder()
+                            .timeStamp(LocalDateTime.now().toString())
+                            .body(null)
+                            .message("Error refresh token: " + e.getMessage())
+                            .status(HttpStatus.BAD_REQUEST)
+                            .statusCode(HttpStatus.BAD_REQUEST.value())
+                            .build()
+            );
+        }
+    }
 
     @PostMapping("/login")
     public ResponseEntity<ResultResponse<JwtResponse>> userLogin(@RequestBody LoginRequest loginRequest) {
+        JwtResponse jwtResponse = null;
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
-            );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            if(loginRequest.getSetUpdate().equals("No")){
+                Authentication authentication = authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
+                );
+                SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            JwtResponse jwtResponse = accountService.login(authentication.getPrincipal());
+                jwtResponse = accountService.login(authentication.getPrincipal());
+            }else if(loginRequest.getSetUpdate().equals("Yes")){
+                Account account = accountService.findByEmail(loginRequest.getEmail());
+                account.setPassword(loginRequest.getPassword());
+                jwtResponse = jwtTokenService.createJwtResponse(account);
+
+                AccessToken accessToken = AccessToken.builder()
+                        .token(jwtResponse.getAccessToken())
+                        .refreshToken(jwtResponse.getRefreshToken())
+                        .issuedAt(System.currentTimeMillis())
+                        .expiresAt(jwtResponse.getExpires())
+                        .build();
+                accessTokenService.saveToken(accessToken);
+            }
+
             return ResponseEntity.ok(
                     ResultResponse.<JwtResponse>builder()
                             .timeStamp(LocalDateTime.now().toString())
@@ -111,7 +179,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ResultResponse<JwtResponse>> accountRegister(@RequestBody RegisterRequest registerRequest) {
         try {
-            Account newAccount = accountService.saveAccount(registerRequest);
+            Account newAccount = accountService.registerAccount(registerRequest);
             JwtResponse jwtResponse = jwtTokenService.createJwtResponse(newAccount);
             return ResponseEntity.created(URI.create("")).body(
                     ResultResponse.<JwtResponse>builder()
@@ -197,12 +265,20 @@ public class AuthController {
         modelAndView.addObject("email", response.getEmail());
 
         switch (response.getType()) {
-            case "Fine":
+            case "Valid":
                 modelAndView.addObject("message", "Xác thực cho email " + response.getEmail() + " thành công");
                 modelAndView.setViewName("VerifySuccess");
                 break;
             case "Not Found":
+                modelAndView.addObject("error", response.getMessage());
+                modelAndView.addObject("message", "Token xác nhận không tìm thấy");
+                modelAndView.setViewName("VerifyError");
+                break;
             case "Expired":
+                modelAndView.addObject("error", response.getMessage());
+                modelAndView.addObject("message", "Phiên xác nhận quá hạng");
+                modelAndView.setViewName("VerifyError");
+                break;
             default:
                 modelAndView.addObject("error", response.getMessage());
                 modelAndView.addObject("message", "Xác thực email không thành công");

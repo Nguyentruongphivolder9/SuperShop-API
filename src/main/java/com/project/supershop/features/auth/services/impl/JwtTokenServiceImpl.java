@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Key;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Optional;
@@ -49,16 +50,20 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
     public JwtResponse createJwtResponse(Account account) {
         Key secretKey = secretKeyProvider.getSecretKey();
         Claims claims = Jwts.claims().setSubject(account.getEmail());
+
+        LocalDateTime birthDay = account.getBirthDay();
+        String birthDayString = (birthDay == null) ? "" : birthDay.toString();
+
         claims.put("userName", account.getUserName());
         claims.put("fullName", account.getFullName());
         claims.put("email", account.getEmail());
         claims.put("role", account.getRoleName());
         claims.put("phoneNumber", account.getPhoneNumber());
-        System.out.print("Phone number from Jwt Create BE : " + account.getPhoneNumber());
-
         claims.put("gender", account.getGender());
         claims.put("avatarUrl", account.getAvatarUrl());
         claims.put("isActive", account.getIsActive() ? "Online" : "Offline");
+        claims.put("birthDay", birthDayString);
+        claims.put("fullNameChanges", account.getUserFullNameChanges());
 
         Date tokenCreateTime = new Date();
         Date tokenValidity = new Date(tokenCreateTime.getTime() + accessTokenValidity);
@@ -84,6 +89,7 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
         jwtResponse.setAccount(account);
         return jwtResponse;
     }
+
 
     @Override
     public Claims resolveClaims(String token, Key secretKey) {
@@ -126,6 +132,15 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
     }
 
     @Override
+    public AccessToken findByRefreshToken(String refreshToken) {
+        Optional<AccessToken> accessToken = accessTokenRepository.findAccessTokenByRefreshToken(refreshToken);
+        if(accessToken.isEmpty()){
+            throw new RuntimeException("No token found");
+        }
+        return accessToken.get();
+    }
+
+    @Override
     public void deleteByToken(String token) {
         try {
             Optional<AccessToken> accessTokenOptional = accessTokenRepository.findAccessTokenByToken(token);
@@ -161,12 +176,7 @@ public class JwtTokenServiceImpl implements JwtTokenService, AccessTokenService 
 
         Account accountFinding = accountService.findByEmail(accountClaims.getSubject());
         if (accountFinding == null) {
-            Account accountGgleReturn = new Account();
-            String email = accountClaims.get("email", String.class);
-            String name = accountClaims.get("name", String.class);
-            accountGgleReturn.setUserName(name);
-            accountGgleReturn.setEmail(email);
-            return accountGgleReturn;
+           throw new RuntimeException("Invalid token");
         }
         return accountFinding;
     }

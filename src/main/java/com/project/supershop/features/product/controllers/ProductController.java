@@ -2,6 +2,10 @@ package com.project.supershop.features.product.controllers;
 
 import com.project.supershop.common.ResultResponse;
 import com.project.supershop.features.account.domain.entities.Account;
+<<<<<<< HEAD
+import com.project.supershop.features.auth.services.AccessTokenService;
+=======
+>>>>>>> e1c9ffec31b7323c9e55728c935b37448b60bd0a
 import com.project.supershop.features.auth.services.JwtTokenService;
 import com.project.supershop.features.product.domain.dto.requests.ProductRequest;
 import com.project.supershop.features.product.domain.dto.responses.ProductResponse;
@@ -23,9 +27,15 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/v1/products")
 public class ProductController {
     private final ProductService productService;
+<<<<<<< HEAD
+    private final JwtTokenService accessTokenService;
+
+    public ProductController(ProductService productService, JwtTokenService accessTokenService) {
+=======
     private final JwtTokenService jwtTokenService;
 
     public ProductController(ProductService productService, JwtTokenService jwtTokenService) {
+>>>>>>> e1c9ffec31b7323c9e55728c935b37448b60bd0a
         this.productService = productService;
         this.jwtTokenService = jwtTokenService;
     }

@@ -37,6 +37,8 @@ public class Account extends BaseEntity {
     private Boolean isActive;
     private Boolean isLoggedOut;
     private Boolean isEnable;
+    //Số lần cho phép thay đổi Full name (max = 2)
+    private int userFullNameChanges = 2;
     //Phương thức user đã dùng để đăng nhâp
     private String provider;
 
