@@ -2,12 +2,14 @@ package com.project.supershop.features.product.controllers;
 
 import com.project.supershop.common.ResultResponse;
 import com.project.supershop.features.account.domain.entities.Account;
+<<<<<<< HEAD
 import com.project.supershop.features.auth.services.AccessTokenService;
+=======
+>>>>>>> e1c9ffec31b7323c9e55728c935b37448b60bd0a
 import com.project.supershop.features.auth.services.JwtTokenService;
 import com.project.supershop.features.product.domain.dto.requests.ProductRequest;
 import com.project.supershop.features.product.domain.dto.responses.ProductResponse;
 import com.project.supershop.features.product.services.ProductService;
-import com.project.supershop.features.voucher.domain.dto.responses.VoucherResponse;
 import com.project.supershop.handler.ForBiddenException;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -25,11 +27,17 @@ import java.time.LocalDateTime;
 @RequestMapping("/api/v1/products")
 public class ProductController {
     private final ProductService productService;
+<<<<<<< HEAD
     private final JwtTokenService accessTokenService;
 
     public ProductController(ProductService productService, JwtTokenService accessTokenService) {
+=======
+    private final JwtTokenService jwtTokenService;
+
+    public ProductController(ProductService productService, JwtTokenService jwtTokenService) {
+>>>>>>> e1c9ffec31b7323c9e55728c935b37448b60bd0a
         this.productService = productService;
-        this.accessTokenService = accessTokenService;
+        this.jwtTokenService = jwtTokenService;
     }
 
     @PostMapping(
@@ -79,7 +87,7 @@ public class ProductController {
             @PathVariable("id") String id,
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String jwtToken) {
         // chưa kiểm tra role
-        Account parseJwtToAccount = accessTokenService.parseJwtTokenToAccount(jwtToken);
+        Account parseJwtToAccount = jwtTokenService.parseJwtTokenToAccount(jwtToken);
         ProductResponse result = productService.getProductByIdOfShop(id, parseJwtToAccount.getId().toString());
         if(!parseJwtToAccount.getId().toString().equals(result.getShopId())){
             throw new ForBiddenException("Your account doesn't have permission to edit products from other shop");
@@ -102,7 +110,6 @@ public class ProductController {
     public ResponseEntity<ResultResponse> updateProduct(
             @Valid @RequestBody ProductRequest productRequest,
             @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String jwtToken) {
-        Account parseJwtToAccount = accessTokenService.parseJwtTokenToAccount(jwtToken);
         ProductResponse result = productService.updateProduct(productRequest, jwtToken);
         return ResponseEntity.ok().body(
                 ResultResponse.builder()

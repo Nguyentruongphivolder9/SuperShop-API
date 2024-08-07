@@ -30,7 +30,7 @@ public class VoucherController {
                                                                          @RequestHeader(name = HttpHeaders.AUTHORIZATION,
                                                                                  required = false) String jwtToken){
 
-        VoucherResponse voucherResponse = voucherService.createVoucher(voucherRequest, jwtAuthUtils.getAccessToken(jwtToken));
+        VoucherResponse voucherResponse = voucherService.createVoucher(voucherRequest, jwtToken);
         ResultResponse<VoucherResponse> response = ResultResponse.<VoucherResponse>builder()
                 .body(voucherResponse)
                 .timeStamp(LocalDateTime.now().toString())
@@ -63,7 +63,7 @@ public class VoucherController {
     ResponseEntity<ResultResponse<Page<VoucherResponse>>> getVouchers(Pageable pageable, @RequestHeader(name = HttpHeaders.AUTHORIZATION,
                                                                        required = false) String jwtToken){
 
-        Page<VoucherResponse> listVoucherRes = voucherService.getVouchers(pageable);
+        Page<VoucherResponse> listVoucherRes = voucherService.getVouchers(pageable, jwtToken);
         ResultResponse<Page<VoucherResponse>> response = ResultResponse.<Page<VoucherResponse>>builder()
                 .body(listVoucherRes)
                 .timeStamp(LocalDateTime.now().toString())
@@ -86,6 +86,22 @@ public class VoucherController {
                 .body(voucherResponse)
                 .timeStamp(LocalDateTime.now().toString())
                 .message("Update voucher successfully")
+                .statusCode(HttpStatus.OK.value())
+                .status(HttpStatus.OK)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @RequestMapping(value = "/vouchers/{id}", method = RequestMethod.DELETE)
+    ResponseEntity<ResultResponse> deleteVoucher(@PathVariable("id") String id,
+                                                               @RequestHeader(name = HttpHeaders.AUTHORIZATION,
+                                                                       required = false) String jwtToken){
+
+        voucherService.deleteVoucher(id);
+        ResultResponse<Object> response = ResultResponse.builder()
+                .timeStamp(LocalDateTime.now().toString())
+                .message("Delete voucher successfully")
                 .statusCode(HttpStatus.OK.value())
                 .status(HttpStatus.OK)
                 .build();

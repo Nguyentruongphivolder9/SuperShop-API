@@ -1,7 +1,10 @@
 package com.project.supershop.features.product.services.impl;
 
 import com.project.supershop.features.account.domain.entities.Account;
+<<<<<<< HEAD
 import com.project.supershop.features.auth.services.AccessTokenService;
+=======
+>>>>>>> e1c9ffec31b7323c9e55728c935b37448b60bd0a
 import com.project.supershop.features.auth.services.JwtTokenService;
 import com.project.supershop.features.product.domain.dto.requests.*;
 import com.project.supershop.features.product.domain.dto.responses.ProductResponse;
@@ -32,10 +35,17 @@ public class ProductServiceImpl implements ProductService {
     private final ProductImageRepository productImageRepository;
     private final PreviewImageRepository previewImageRepository;
     private final CategoryRepository categoryRepository;
+<<<<<<< HEAD
     private final JwtTokenService accessTokenService;
     private final RedisJSON redisJSON;
 
     public ProductServiceImpl(ModelMapper modelMapper, ProductRepository productRepository, VariantGroupRepository variantGroupRepository, VariantRepository variantRepository, ProductVariantRepository productVariantRepository, ProductImageRepository productImageRepository, PreviewImageRepository previewImageRepository, CategoryRepository categoryRepository, JwtTokenService accessTokenService, RedisJSON redisJSON) {
+=======
+    private final JwtTokenService jwtTokenService;
+    private final RedisJSON redisJSON;
+
+    public ProductServiceImpl(ModelMapper modelMapper, ProductRepository productRepository, VariantGroupRepository variantGroupRepository, VariantRepository variantRepository, ProductVariantRepository productVariantRepository, ProductImageRepository productImageRepository, PreviewImageRepository previewImageRepository, CategoryRepository categoryRepository, JwtTokenService jwtTokenService, RedisJSON redisJSON) {
+>>>>>>> e1c9ffec31b7323c9e55728c935b37448b60bd0a
         this.modelMapper = modelMapper;
         this.productRepository = productRepository;
         this.variantGroupRepository = variantGroupRepository;
@@ -44,7 +54,7 @@ public class ProductServiceImpl implements ProductService {
         this.productImageRepository = productImageRepository;
         this.previewImageRepository = previewImageRepository;
         this.categoryRepository = categoryRepository;
-        this.accessTokenService = accessTokenService;
+        this.jwtTokenService = jwtTokenService;
         this.redisJSON = redisJSON;
     }
 
@@ -55,7 +65,7 @@ public class ProductServiceImpl implements ProductService {
         List<ProductVariant> productVariants = new ArrayList<>();
         List<ProductImage> productImages = new ArrayList<>();
 
-        Account parseJwtToAccount = accessTokenService.parseJwtTokenToAccount(jwtToken);
+        Account parseJwtToAccount = jwtTokenService.parseJwtTokenToAccount(jwtToken);
         Optional<Category> resultCateFindById = categoryRepository.findById(Integer.parseInt(productRequest.getCategoryId()));
 
         if(productRequest.getCategoryId().isEmpty()){
@@ -293,7 +303,7 @@ public class ProductServiceImpl implements ProductService {
         List<ProductVariant> productVariants = new ArrayList<>();
         List<ProductImage> productImages = new ArrayList<>();
 
-        Account parseJwtToAccount = accessTokenService.parseJwtTokenToAccount(jwtToken);
+        Account parseJwtToAccount = jwtTokenService.parseJwtTokenToAccount(jwtToken);
         Optional<Category> resultCateFindById = categoryRepository.findById(Integer.parseInt(productRequest.getCategoryId()));
 
         if(productRequest.getCategoryId().isEmpty()){
@@ -304,9 +314,9 @@ public class ProductServiceImpl implements ProductService {
             throw new NotFoundException(productRequest.getCategoryId() + " does not exist");
         }
 
-        Optional<Product> productOptional = productRepository.findByProductIdOfShop(UUID.fromString(productRequest.getId()), UUID.fromString(productRequest.getShopId()));
+        Optional<Product> productOptional = productRepository.findByProductIdOfProductOfShop(UUID.fromString(productRequest.getId()), UUID.fromString(productRequest.getShopId()));
         if(productOptional.isEmpty()){
-            throw new NotFoundException("Product dose not exists.");
+            throw new NotFoundException("Product does not exists.");
         }
 
         productOptional.get().setShop(parseJwtToAccount);
@@ -677,14 +687,23 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductResponse getProductByIdForUser(String id, String shopId) {
-        Optional<Product> productResponse = productRepository.findByProductIdAndIsActive(UUID.fromString(id), UUID.fromString(shopId), true);
+        Optional<Product> productResponse = productRepository.findByProductIdAndIsActiveOfProductOfShop(UUID.fromString(id), UUID.fromString(shopId), true);
         return productResponse.map(this::mapProductToProductResponse)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
     }
 
     @Override
+    public ProductResponse getProductById(String id) {
+        Optional<Product> productResponse = productRepository.findByProductIdOfProduct(UUID.fromString(id));
+        if (productResponse.isEmpty()) {
+           return null;
+        }
+        return productResponse.map(this::mapProductToProductResponse).get();
+    }
+
+    @Override
     public ProductResponse getProductByIdOfShop(String id, String shopId) {
-        Optional<Product> productResponse = productRepository.findByProductIdOfShop(UUID.fromString(id), UUID.fromString(shopId));
+        Optional<Product> productResponse = productRepository.findByProductIdOfProductOfShop(UUID.fromString(id), UUID.fromString(shopId));
         return productResponse.map(this::mapProductToProductResponse)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
     }

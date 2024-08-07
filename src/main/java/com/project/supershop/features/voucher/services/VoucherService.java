@@ -13,6 +13,7 @@ import java.util.Optional;
 public interface VoucherService {
     VoucherResponse createVoucher(VoucherRequest voucherRequest, String jwtToken);
     VoucherResponse getVoucherById(String id);
-    Page<VoucherResponse> getVouchers(Pageable pageable);
+    Page<VoucherResponse> getVouchers(Pageable pageable, String jwtToken);
     VoucherResponse partialUpdate(String id, VoucherRequest voucherRequest);
+    void deleteVoucher(String id);
 }

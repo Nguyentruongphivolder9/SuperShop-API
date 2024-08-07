@@ -1,6 +1,5 @@
 package com.project.supershop.features.product.domain.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.project.supershop.common.BaseEntity;
 import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.features.product.domain.dto.requests.ProductRequest;
@@ -11,7 +10,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "products")
@@ -31,20 +29,20 @@ public class Product extends BaseEntity {
     private Boolean isVariant;
     private Boolean isActive;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private List<ProductImage> productImages;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private List<VariantGroup> variantsGroup;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private List<ProductVariant> productVariants;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "categoryId")
     private Category category;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "shopId")
     private Account shop;
 
