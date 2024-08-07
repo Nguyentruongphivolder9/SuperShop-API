@@ -83,23 +83,17 @@ public class OAuth2UserController {
             ).execute();
 
             OAuth2AuthenticatedPrincipal principal = googleOpaqueTokenIntrospector.introspect(tokenResponse.getAccessToken());
-
             Account accountFromGoogle = createAccountFromPrincipal(principal);
             Account newAccount = accountService.createOrMergeGoogleAccountToLocalAccount(accountFromGoogle);
+
             newAccount.setIsActive(true);
             JwtResponse jwtResponse = jwtTokenService.createJwtResponse(newAccount);
-            AccessToken accessToken = AccessToken.builder()
-                    .token(jwtResponse.getAccessToken())
-                    .refreshToken(jwtResponse.getRefreshToken())
-                    .issuedAt(System.currentTimeMillis())
-                    .expiresAt(jwtResponse.getExpires())
-                    .build();
-            accessTokenService.saveToken(accessToken);
+            boolean hasPassword = newAccount.getPassword() != null && !newAccount.getPassword().isEmpty();
             String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/login")
                     .queryParam("token", jwtResponse.getAccessToken())
                     .queryParam("refreshToken", jwtResponse.getRefreshToken())
+                    .queryParam("hasPassword", hasPassword)
                     .build().toUriString();
-
             return ResponseEntity.status(HttpStatus.FOUND)
                     .location(URI.create(redirectUrl))
                     .build();
@@ -108,13 +102,6 @@ public class OAuth2UserController {
             return handleErrorResponse(e);
         }
     }
-
-
-
-
-
-
-
 
 
 

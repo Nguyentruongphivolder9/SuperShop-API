@@ -8,5 +8,6 @@ import java.util.UUID;
 
 public interface AccessTokenRepository extends JpaRepository<AccessToken, UUID> {
     Optional<AccessToken> findAccessTokenByToken(String token);
+    Optional<AccessToken> findAccessTokenByRefreshToken(String refreshToken);
     void deleteAccessTokenByToken(String token);
 }

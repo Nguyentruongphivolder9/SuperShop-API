@@ -16,6 +16,7 @@ public class JacksonConfig {
         mapper.registerModule(new JavaTimeModule());
         // Cấu hình để không thất bại khi gặp các giá trị NULL cho date/time
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        mapper.registerModule(new JavaTimeModule());
         return mapper;
     }
 

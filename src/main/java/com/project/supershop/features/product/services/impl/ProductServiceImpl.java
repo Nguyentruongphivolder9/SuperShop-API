@@ -2,6 +2,7 @@ package com.project.supershop.features.product.services.impl;
 
 import com.project.supershop.features.account.domain.entities.Account;
 import com.project.supershop.features.auth.services.AccessTokenService;
+import com.project.supershop.features.auth.services.JwtTokenService;
 import com.project.supershop.features.product.domain.dto.requests.*;
 import com.project.supershop.features.product.domain.dto.responses.ProductResponse;
 import com.project.supershop.features.product.domain.entities.*;
@@ -31,10 +32,10 @@ public class ProductServiceImpl implements ProductService {
     private final ProductImageRepository productImageRepository;
     private final PreviewImageRepository previewImageRepository;
     private final CategoryRepository categoryRepository;
-    private final AccessTokenService accessTokenService;
+    private final JwtTokenService accessTokenService;
     private final RedisJSON redisJSON;
 
-    public ProductServiceImpl(ModelMapper modelMapper, ProductRepository productRepository, VariantGroupRepository variantGroupRepository, VariantRepository variantRepository, ProductVariantRepository productVariantRepository, ProductImageRepository productImageRepository, PreviewImageRepository previewImageRepository, CategoryRepository categoryRepository, AccessTokenService accessTokenService, RedisJSON redisJSON) {
+    public ProductServiceImpl(ModelMapper modelMapper, ProductRepository productRepository, VariantGroupRepository variantGroupRepository, VariantRepository variantRepository, ProductVariantRepository productVariantRepository, ProductImageRepository productImageRepository, PreviewImageRepository previewImageRepository, CategoryRepository categoryRepository, JwtTokenService accessTokenService, RedisJSON redisJSON) {
         this.modelMapper = modelMapper;
         this.productRepository = productRepository;
         this.variantGroupRepository = variantGroupRepository;

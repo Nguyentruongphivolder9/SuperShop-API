@@ -122,7 +122,6 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
     }
 
 
-
     @Override
     public JwtResponse login(Object principal) {
         Account account;
@@ -131,6 +130,9 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         } else if (principal instanceof UserDetails) {
             UserDetails userDetails = (UserDetails) principal;
             account = convertToAccount(userDetails);
+            if (account.getIsLoggedOut()) {
+                throw new RuntimeException("Account is already logged in");
+            }
         } else {
             throw new IllegalStateException("Unexpected principal type: " + principal.getClass());
         }
@@ -166,16 +168,29 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
     public Account createOrMergeGoogleAccountToLocalAccount(Account accountFromGoogle) {
         Optional<Account> optionalAccount = accountRepositories.findAccountByEmail(accountFromGoogle.getEmail());
         if (optionalAccount.isEmpty()) {
+            //Create
             accountFromGoogle.setProvider(Provider.GOOGLE.getValue());
             accountFromGoogle.setIsLoggedOut(true);
             return accountRepositories.save(accountFromGoogle);
         } else {
             Account localAccount = optionalAccount.get();
+            if (localAccount.getProvider().equals(Provider.GOOGLE.getValue())) {
+                return localAccount;
+            }
             localAccount.setUserName(accountFromGoogle.getUserName());
             localAccount.setFullName(accountFromGoogle.getFullName());
             localAccount.setAvatarUrl(accountFromGoogle.getAvatarUrl());
             localAccount.setRoleName("USER");
             localAccount.setProvider(Provider.GOOGLE.getValue());
+
+            Email emailExist = emailRepository.findEmailByEmailAddress(localAccount.getEmail());
+            if (emailExist.isVerified()) {
+                return accountRepositories.save(localAccount);
+            }
+            Email email = new Email();
+            email.setVerified(true);
+            email.setEmailAddress(accountFromGoogle.getEmail());
+            emailRepository.save(email);
             return accountRepositories.save(localAccount);
         }
     }
@@ -183,11 +198,11 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
     @Override
     public Account registerAccount(RegisterRequest request) {
         Email email = emailRepository.findEmailByEmailAddress(request.getEmail());
-        if(email.isVerified()){
+        if (email.isVerified()) {
             throw new RuntimeException("Email is already been verified for another account");
         }
         Optional<Account> accountWithEmailAbove = accountRepositories.findAccountByEmail(email.getEmailAddress());
-        if(accountWithEmailAbove.isEmpty()){
+        if (accountWithEmailAbove.isEmpty()) {
             throw new RuntimeException("No available registration account for the email");
         }
         request.setEnable(false);
@@ -212,10 +227,35 @@ public class AccountServiceImpl implements AccountService, UserDetailsService {
         return accountRepositories.save(account);
     }
 
+    @Override
+    public String encodeAccountPassword(String password) {
+        return "";
+    }
+
+    @Override
+    public String decodeAccountPassword(String password) {
+        return "";
+    }
+
+    @Override
+    public JwtResponse refreshToken(String refreshToken) {
+        AccessToken accessToken = accessTokenService.findByRefreshToken(refreshToken);
+        Account account = jwtTokenService.parseJwtTokenToAccount(accessToken.getToken());
+        accessTokenService.deleteByToken(accessToken.getToken());
+        JwtResponse response = jwtTokenService.createJwtResponse(account);
+        AccessToken newAccessToken = AccessToken.builder()
+                .token(response.getAccessToken())
+                .refreshToken(response.getRefreshToken())
+                .issuedAt(System.currentTimeMillis())
+                .expiresAt(response.getExpires())
+                .build();
+        return response;
+    }
+
 
     @Override
     public Account saveAccount(Account account) {
-     return null;
+        return null;
     }
 
     @Override

@@ -28,4 +28,7 @@ public interface AccountService{
     boolean waitingForEmailResponse(WaitingForEmailVerifyRequest waitingForEmailVerifyRequest);
     Account createOrMergeGoogleAccountToLocalAccount(Account accountFromGoogle);
     Account registerAccount(RegisterRequest registerRequest);
+    String encodeAccountPassword(String password);
+    String decodeAccountPassword(String password);
+    JwtResponse refreshToken (String refreshToken);
 }
